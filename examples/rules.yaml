@@ -1,0 +1,18 @@
+dataset:
+  name: "CodeSearchNet"
+  source: "https://github.com/github/CodeSearchNet"
+  license: "MIT with restrictions"
+  description: >
+    Curated dataset of 6M code-docstring pairs across six languages,
+    intended for research on code search and understanding.
+
+allowed_uses:
+  - "Academic research on code understanding"
+  - "Training models for code search and retrieval"
+  - "Benchmarking code generation models"
+
+barred_uses:
+  - "Training models for generating malicious code or exploits"
+  - "Commercial code generation products without proper attribution"
+  - "Redistribution of raw dataset without original license"
+  - "Training surveillance or user-profiling tools"
