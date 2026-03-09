@@ -35,7 +35,7 @@ Only flag clear, concrete violations.
 """
 
 
-def _build_user_prompt(rules: UsageRules, codebase: dict[str, str]) -> str:
+def _build_user_prompt(rules: UsageRules, codebase: dict[str, str] | str) -> str:
     """Compose the user message with rules + code."""
     parts: list[str] = []
 
@@ -54,16 +54,20 @@ def _build_user_prompt(rules: UsageRules, codebase: dict[str, str]) -> str:
         parts.append(f"- {use}")
 
     parts.append("\n## Source Code")
-    for filepath, content in codebase.items():
-        parts.append(f"\n### File: {filepath}")
-        parts.append(f"```\n{content}\n```")
+    if isinstance(codebase, dict):
+        for filepath, content in codebase.items():
+            parts.append(f"\n### File: {filepath}")
+            parts.append(f"```\n{content}\n```")
+    else:
+        # It's a single string digest from gitingest
+        parts.append(f"\n```\n{codebase}\n```")
 
     return "\n".join(parts)
 
 
 def analyze(
     rules: UsageRules,
-    codebase: dict[str, str],
+    codebase: dict[str, str] | str,
     api_key: str,
     model_name: str = "gemini-2.5-flash",
 ) -> ComplianceReport:

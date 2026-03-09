@@ -1,16 +1,25 @@
-"""Recursively load source files from a directory."""
+"""Recursively load source files from a directory, or fetch a digest via gitingest."""
 
 from pathlib import Path
+from gitingest import ingest
 
 SKIP_DIRS = {"__pycache__", ".git", "node_modules", "venv", ".venv", ".tox", "dist", "build"}
 
 
-def load_codebase(directory: str, extensions: list[str] | None = None) -> dict[str, str]:
-    """Return {relative_path: file_contents} for all matching files."""
+def load_codebase(source: str, extensions: list[str] | None = None) -> dict[str, str] | str:
+    """
+    If source is a URL, returns a single text digest string via gitingest.
+    If source is a local directory, returns {relative_path: file_contents}.
+    """
+    if source.startswith(("http://", "https://")):
+        print(f"  Fetching repository digest from {source} via gitingest...")
+        summary, tree, content = ingest(source)
+        return content
+
     if extensions is None:
         extensions = [".py"]
 
-    root = Path(directory).resolve()
+    root = Path(source).resolve()
     files: dict[str, str] = {}
 
     for path in root.rglob("*"):

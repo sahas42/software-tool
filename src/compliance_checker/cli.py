@@ -4,12 +4,14 @@ import argparse
 import sys
 import os
 
+from dotenv import load_dotenv
 from .rules_loader import load_rules
 from .codebase_loader import load_codebase
 from .analyzer import analyze
 
 
 def main() -> None:
+    load_dotenv()
     parser = argparse.ArgumentParser(
         description="Check a codebase for dataset usage policy violations."
     )
@@ -36,7 +38,10 @@ def main() -> None:
     # 2. Load codebase
     print(f"Scanning codebase at {args.codebase} ...")
     codebase = load_codebase(args.codebase, args.extensions)
-    print(f"  Found {len(codebase)} file(s).")
+    if isinstance(codebase, dict):
+        print(f"  Found {len(codebase)} file(s).")
+    else:
+        print(f"  Fetched digest ({len(codebase)} characters).")
 
     if not codebase:
         print("No files found. Check the path and extensions.")
