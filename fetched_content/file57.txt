@@ -1,0 +1,310 @@
+File Name: Home.tsx
+Directory Location: frontend/src/pages
+Original Path: frontend/src/pages/Home.tsx
+
+// Home component: Landing page for AspireBridge
+// Shows platform overview and quick links based on user type
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+const Home: React.FC = () => {
+    const { user } = useAuth();
+
+    return (
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+            {/* Hero Section */}
+            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                <h1 style={{ fontSize: '48px', marginBottom: '20px', color: '#333' }}>
+                    Welcome to AspireBridge
+                </h1>
+                <p style={{ fontSize: '20px', color: '#666', maxWidth: '800px', margin: '0 auto' }}>
+                    Connecting donors with students preparing for competitive exams.
+                    Share your study materials and help aspiring students achieve their dreams.
+                </p>
+            </div>
+
+            {/* Quick Actions based on user status */}
+            {!user ? (
+                // Not logged in - show registration options
+                <div style={{ marginBottom: '60px' }}>
+                    <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Get Started</h2>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: '30px'
+                    }}>
+                        <div style={{
+                            padding: '40px',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '12px',
+                            textAlign: 'center',
+                            border: '2px solid #28a745'
+                        }}>
+                            <h3 style={{ color: '#28a745', marginBottom: '15px' }}>I Want to Donate</h3>
+                            <p style={{ color: '#666', marginBottom: '20px' }}>
+                                Share your study materials with students who need them
+                            </p>
+                            <Link
+                                to="/register"
+                                style={{
+                                    display: 'inline-block',
+                                    padding: '12px 30px',
+                                    backgroundColor: '#28a745',
+                                    color: 'white',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                Register as Donor
+                            </Link>
+                        </div>
+
+                        <div style={{
+                            padding: '40px',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '12px',
+                            textAlign: 'center',
+                            border: '2px solid #007bff'
+                        }}>
+                            <h3 style={{ color: '#007bff', marginBottom: '15px' }}>I Need Books</h3>
+                            <p style={{ color: '#666', marginBottom: '20px' }}>
+                                Get free study materials for your exam preparation
+                            </p>
+                            <Link
+                                to="/register"
+                                style={{
+                                    display: 'inline-block',
+                                    padding: '12px 30px',
+                                    backgroundColor: '#007bff',
+                                    color: 'white',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                Register as Recipient
+                            </Link>
+                        </div>
+                    </div>
+                    <p style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>
+                        Already have an account? <Link to="/login">Login here</Link>
+                    </p>
+                </div>
+            ) : (
+                // Logged in - show personalized quick actions
+                <div style={{ marginBottom: '60px' }}>
+                    <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>
+                        Welcome back, {user.username}!
+                    </h2>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '20px'
+                    }}>
+                        {(user.user_type === 'donor' || user.user_type === 'both') && (
+                            <>
+                                <Link
+                                    to="/create-listing"
+                                    style={{
+                                        padding: '30px',
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        textDecoration: 'none',
+                                        borderRadius: '8px',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    <h3 style={{ margin: '0 0 10px 0' }}>Create Listing</h3>
+                                    <p style={{ margin: 0, opacity: 0.9 }}>Share your books</p>
+                                </Link>
+                                <Link
+                                    to="/my-listings"
+                                    style={{
+                                        padding: '30px',
+                                        backgroundColor: '#17a2b8',
+                                        color: 'white',
+                                        textDecoration: 'none',
+                                        borderRadius: '8px',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    <h3 style={{ margin: '0 0 10px 0' }}>My Listings</h3>
+                                    <p style={{ margin: 0, opacity: 0.9 }}>Manage your books</p>
+                                </Link>
+                            </>
+                        )}
+                        {(user.user_type === 'recipient' || user.user_type === 'both') && (
+                            <Link
+                                to="/recipient-profile"
+                                style={{
+                                    padding: '30px',
+                                    backgroundColor: '#ffc107',
+                                    color: '#000',
+                                    textDecoration: 'none',
+                                    borderRadius: '8px',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <h3 style={{ margin: '0 0 10px 0' }}>My Profile</h3>
+                                <p style={{ margin: 0, opacity: 0.9 }}>Manage your profile</p>
+                            </Link>
+                        )}
+                        {user.role === 'admin' && (
+                            <Link
+                                to="/admin"
+                                style={{
+                                    padding: '30px',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white',
+                                    textDecoration: 'none',
+                                    borderRadius: '8px',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <h3 style={{ margin: '0 0 10px 0' }}>Admin Panel</h3>
+                                <p style={{ margin: 0, opacity: 0.9 }}>Manage platform</p>
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Browse Books Section */}
+            <div style={{
+                padding: '60px 40px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '12px',
+                textAlign: 'center',
+                marginBottom: '60px'
+            }}>
+                <h2 style={{ marginBottom: '20px' }}>Browse Available Books</h2>
+                <p style={{ color: '#666', marginBottom: '30px', maxWidth: '600px', margin: '0 auto 30px' }}>
+                    Explore study materials donated by students for JEE, NEET, UPSC, and other competitive exams
+                </p>
+                <Link
+                    to="/books"
+                    style={{
+                        display: 'inline-block',
+                        padding: '15px 40px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        textDecoration: 'none',
+                        borderRadius: '6px',
+                        fontSize: '18px',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    Browse Books
+                </Link>
+            </div>
+
+            {/* Features Section */}
+            <div>
+                <h2 style={{ textAlign: 'center', marginBottom: '40px' }}>How It Works</h2>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '30px'
+                }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            backgroundColor: '#28a745',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            fontSize: '40px'
+                        }}>
+                            📚
+                        </div>
+                        <h3>Donate Books</h3>
+                        <p style={{ color: '#666' }}>
+                            List your used study materials and help students prepare for exams
+                        </p>
+                    </div>
+
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            backgroundColor: '#007bff',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            fontSize: '40px'
+                        }}>
+                            ✓
+                        </div>
+                        <h3>Get Verified</h3>
+                        <p style={{ color: '#666' }}>
+                            Recipients create profiles and get verified based on merit
+                        </p>
+                    </div>
+
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            backgroundColor: '#ffc107',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            fontSize: '40px'
+                        }}>
+                            🎯
+                        </div>
+                        <h3>Merit-Based Allocation</h3>
+                        <p style={{ color: '#666' }}>
+                            Books are allocated based on academic merit and proximity
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Support Monetary Donations */}
+            {user && (
+                <div style={{
+                    marginTop: '60px',
+                    padding: '40px',
+                    backgroundColor: '#e3f2fd',
+                    borderRadius: '12px',
+                    textAlign: 'center'
+                }}>
+                    <h2 style={{ marginBottom: '20px' }}>Support Logistics</h2>
+                    <p style={{ color: '#666', marginBottom: '30px', maxWidth: '600px', margin: '0 auto 30px' }}>
+                        Help cover shipping costs for book deliveries to students
+                    </p>
+                    <Link
+                        to="/donate"
+                        style={{
+                            display: 'inline-block',
+                            padding: '12px 30px',
+                            backgroundColor: '#2196f3',
+                            color: 'white',
+                            textDecoration: 'none',
+                            borderRadius: '6px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        Make a Donation
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Home;
+
+
+

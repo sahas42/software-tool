@@ -1,0 +1,222 @@
+File Name: recipients.ts
+Directory Location: backend/src/database
+Original Path: backend/src/database/recipients.ts
+
+// Database operations for Recipient Profiles
+// This file contains all operations for the recipient_profiles table
+
+import db from '../database';
+import type { RecipientProfile } from '../database';
+
+// ============= RECIPIENT PROFILE OPERATIONS =============
+
+/**
+ * Create a new recipient profile
+ * @param userId - User ID
+ * @param profileData - Profile details
+ * @returns The newly created profile
+ */
+export const createRecipientProfile = (
+    userId: number,
+    profileData: {
+        full_name: string;
+        phone_number: string;
+        date_of_birth: string;
+        current_class: string;
+        target_exam: string;
+        tenth_percentage: number;
+        tenth_board: string;
+        tenth_marksheet_file?: string;
+        school_id?: number;
+        school_name: string;
+        school_address: string;
+        school_city: string;
+        school_state: string;
+        school_pincode: string;
+    }
+): RecipientProfile => {
+    const now = new Date().toLocaleString();
+
+    const stmt = db.prepare(`
+    INSERT INTO recipient_profiles (
+      user_id, full_name, phone_number, date_of_birth, current_class,
+      target_exam, tenth_percentage, tenth_board, tenth_marksheet_file,
+      school_id, school_name, school_address, school_city, school_state,
+      school_pincode, verification_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+  `);
+
+    const info = stmt.run(
+        userId,
+        profileData.full_name,
+        profileData.phone_number,
+        profileData.date_of_birth,
+        profileData.current_class,
+        profileData.target_exam,
+        profileData.tenth_percentage,
+        profileData.tenth_board,
+        profileData.tenth_marksheet_file || null,
+        profileData.school_id || null,
+        profileData.school_name,
+        profileData.school_address,
+        profileData.school_city,
+        profileData.school_state,
+        profileData.school_pincode,
+        now,
+        now
+    );
+
+    return {
+        id: info.lastInsertRowid as number,
+        user_id: userId,
+        ...profileData,
+        tenth_marksheet_file: profileData.tenth_marksheet_file || null,
+        school_id: profileData.school_id || null,
+        verification_status: 'pending',
+        verified_by: null,
+        verified_at: null,
+        rejection_reason: null,
+        created_at: now,
+        updated_at: now
+    };
+};
+
+/**
+ * Get recipient profile by user ID
+ * @param userId - User ID
+ * @returns Recipient profile or undefined
+ */
+export const getRecipientProfile = (userId: number): RecipientProfile | undefined => {
+    const stmt = db.prepare('SELECT * FROM recipient_profiles WHERE user_id = ?');
+    return stmt.get(userId) as RecipientProfile | undefined;
+};
+
+/**
+ * Get recipient profile by ID
+ * @param id - Profile ID
+ * @returns Recipient profile or undefined
+ */
+export const getRecipientProfileById = (id: number): RecipientProfile | undefined => {
+    const stmt = db.prepare('SELECT * FROM recipient_profiles WHERE id = ?');
+    return stmt.get(id) as RecipientProfile | undefined;
+};
+
+/**
+ * Update recipient profile
+ * @param userId - User ID
+ * @param updates - Fields to update
+ * @returns Updated profile or null
+ */
+export const updateRecipientProfile = (
+    userId: number,
+    updates: Partial<Omit<RecipientProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+): RecipientProfile | null => {
+    const now = new Date().toLocaleString();
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined && key !== 'id' && key !== 'user_id' && key !== 'created_at' && key !== 'updated_at') {
+            fields.push(`${key} = ?`);
+            values.push(value);
+        }
+    });
+
+    if (fields.length === 0) {
+        return getRecipientProfile(userId) || null;
+    }
+
+    fields.push('updated_at = ?');
+    values.push(now);
+    values.push(userId);
+
+    const stmt = db.prepare(`
+    UPDATE recipient_profiles 
+    SET ${fields.join(', ')} 
+    WHERE user_id = ?
+  `);
+
+    const info = stmt.run(...values);
+
+    if (info.changes === 0) {
+        return null;
+    }
+
+    return getRecipientProfile(userId) || null;
+};
+
+/**
+ * Verify or reject a recipient profile (admin only)
+ * @param profileId - Profile ID
+ * @param adminId - Admin user ID
+ * @param approved - Whether to approve or reject
+ * @param reason - Rejection reason (if rejected)
+ * @returns true if successful
+ */
+export const verifyRecipientProfile = (
+    profileId: number,
+    adminId: number,
+    approved: boolean,
+    reason?: string
+): boolean => {
+    const now = new Date().toLocaleString();
+    const status = approved ? 'approved' : 'rejected';
+
+    const stmt = db.prepare(`
+    UPDATE recipient_profiles 
+    SET verification_status = ?, verified_by = ?, verified_at = ?, 
+        rejection_reason = ?, updated_at = ?
+    WHERE id = ?
+  `);
+
+    const info = stmt.run(status, adminId, now, reason || null, now, profileId);
+    return info.changes > 0;
+};
+
+/**
+ * Get all unverified profiles (admin)
+ * @returns Array of pending profiles
+ */
+export const getUnverifiedProfiles = (): RecipientProfile[] => {
+    const stmt = db.prepare(`
+    SELECT * FROM recipient_profiles 
+    WHERE verification_status = 'pending' 
+    ORDER BY created_at ASC
+  `);
+    return stmt.all() as RecipientProfile[];
+};
+
+/**
+ * Check if a user has a verified profile
+ * @param userId - User ID
+ * @returns true if profile exists and is verified
+ */
+export const hasVerifiedProfile = (userId: number): boolean => {
+    const stmt = db.prepare(`
+    SELECT COUNT(*) as count FROM recipient_profiles 
+    WHERE user_id = ? AND verification_status = 'approved'
+  `);
+    const result = stmt.get(userId) as { count: number };
+    return result.count > 0;
+};
+
+/**
+ * Update marksheet file
+ * @param userId - User ID
+ * @param filename - Marksheet filename
+ * @returns true if successful
+ */
+export const updateMarksheet = (userId: number, filename: string): boolean => {
+    const now = new Date().toLocaleString();
+    const stmt = db.prepare(`
+    UPDATE recipient_profiles 
+    SET tenth_marksheet_file = ?, updated_at = ?
+    WHERE user_id = ?
+  `);
+
+    const info = stmt.run(filename, now, userId);
+    return info.changes > 0;
+};
+
+
+

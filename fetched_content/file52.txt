@@ -1,0 +1,329 @@
+File Name: BookDetail.tsx
+Directory Location: frontend/src/pages
+Original Path: frontend/src/pages/BookDetail.tsx
+
+// BookDetail component: Detailed view of a single book listing
+// Shows full information and allows verified recipients to request the book
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+interface BookListing {
+    id: number;
+    donor_id: number;
+    title: string;
+    description: string | null;
+    exam_type: string;
+    subjects: string;
+    condition: string;
+    year_used: string | null;
+    location_city: string;
+    location_state: string;
+    status: string;
+    allocated_to: number | null;
+    images: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+const BookDetail: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const [listing, setListing] = useState<BookListing | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [requesting, setRequesting] = useState(false);
+    const [requestMessage, setRequestMessage] = useState('');
+
+    const API_URL = 'http://localhost:3001';
+
+    useEffect(() => {
+        fetchListing();
+    }, [id]);
+
+    const fetchListing = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/api/books/${id}`);
+
+            if (!response.ok) {
+                throw new Error('Book not found');
+            }
+
+            const data = await response.json();
+            setListing(data);
+            setError('');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load book');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRequest = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        try {
+            setRequesting(true);
+            setRequestMessage('');
+
+            const response = await fetch(`${API_URL}/api/requests`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ listing_id: listing?.id }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create request');
+            }
+
+            setRequestMessage('Request submitted successfully! You will be notified if your request is approved.');
+        } catch (err) {
+            setRequestMessage(err instanceof Error ? err.message : 'Failed to submit request');
+        } finally {
+            setRequesting(false);
+        }
+    };
+
+    const parseSubjects = (subjectsJson: string): string[] => {
+        try {
+            return JSON.parse(subjectsJson);
+        } catch {
+            return [];
+        }
+    };
+
+    const parseImages = (imagesJson: string | null): string[] => {
+        if (!imagesJson) return [];
+        try {
+            return JSON.parse(imagesJson);
+        } catch {
+            return [];
+        }
+    };
+
+    if (loading) {
+        return (
+            <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+                <p>Loading book details...</p>
+            </div>
+        );
+    }
+
+    if (error || !listing) {
+        return (
+            <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+                <div style={{
+                    padding: '20px',
+                    backgroundColor: '#ffebee',
+                    color: '#c62828',
+                    borderRadius: '8px'
+                }}>
+                    {error || 'Book not found'}
+                </div>
+                <button
+                    onClick={() => navigate('/books')}
+                    style={{
+                        marginTop: '20px',
+                        padding: '10px 20px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Back to Browse
+                </button>
+            </div>
+        );
+    }
+
+    const images = parseImages(listing.images);
+    const subjects = parseSubjects(listing.subjects);
+
+    return (
+        <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+            {/* Back Button */}
+            <button
+                onClick={() => navigate('/books')}
+                style={{
+                    marginBottom: '20px',
+                    padding: '8px 16px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                }}
+            >
+                ← Back to Browse
+            </button>
+
+            {/* Book Title */}
+            <h1 style={{ marginBottom: '10px' }}>{listing.title}</h1>
+
+            {/* Status Badges */}
+            <div style={{ marginBottom: '20px' }}>
+                <span style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    borderRadius: '4px',
+                    marginRight: '10px'
+                }}>
+                    {listing.exam_type}
+                </span>
+                <span style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    backgroundColor: listing.status === 'available' ? '#28a745' : '#ffc107',
+                    color: 'white',
+                    borderRadius: '4px',
+                    marginRight: '10px'
+                }}>
+                    {listing.status === 'available' ? 'Available' : 'Allocated'}
+                </span>
+                <span style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    backgroundColor: '#17a2b8',
+                    color: 'white',
+                    borderRadius: '4px'
+                }}>
+                    {listing.condition}
+                </span>
+            </div>
+
+            {/* Images */}
+            {images.length > 0 && (
+                <div style={{
+                    marginBottom: '30px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                    gap: '10px'
+                }}>
+                    {images.map((image, index) => (
+                        <img
+                            key={index}
+                            src={`${API_URL}/api/uploads/books/${image}`}
+                            alt={`Book image ${index + 1}`}
+                            style={{
+                                width: '100%',
+                                height: '200px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                border: '1px solid #ddd'
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Description */}
+            {listing.description && (
+                <div style={{ marginBottom: '30px' }}>
+                    <h3>Description</h3>
+                    <p style={{ color: '#666', lineHeight: '1.6' }}>{listing.description}</p>
+                </div>
+            )}
+
+            {/* Details */}
+            <div style={{
+                backgroundColor: '#f5f5f5',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '30px'
+            }}>
+                <h3 style={{ marginTop: 0 }}>Details</h3>
+
+                <div style={{ marginBottom: '10px' }}>
+                    <strong>Subjects:</strong> {subjects.join(', ')}
+                </div>
+
+                {listing.year_used && (
+                    <div style={{ marginBottom: '10px' }}>
+                        <strong>Year Used:</strong> {listing.year_used}
+                    </div>
+                )}
+
+                <div style={{ marginBottom: '10px' }}>
+                    <strong>Location:</strong> {listing.location_city}, {listing.location_state}
+                </div>
+
+                <div style={{ marginBottom: '10px' }}>
+                    <strong>Posted:</strong> {new Date(listing.created_at).toLocaleDateString()}
+                </div>
+            </div>
+
+            {/* Request Button */}
+            {listing.status === 'available' && (
+                <div>
+                    <button
+                        onClick={handleRequest}
+                        disabled={requesting}
+                        style={{
+                            width: '100%',
+                            padding: '15px',
+                            fontSize: '16px',
+                            backgroundColor: requesting ? '#ccc' : '#28a745',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: requesting ? 'not-allowed' : 'pointer',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {requesting ? 'Submitting Request...' : 'Request This Book'}
+                    </button>
+
+                    {requestMessage && (
+                        <div style={{
+                            marginTop: '15px',
+                            padding: '15px',
+                            backgroundColor: requestMessage.includes('success') ? '#d4edda' : '#ffebee',
+                            color: requestMessage.includes('success') ? '#155724' : '#c62828',
+                            borderRadius: '4px'
+                        }}>
+                            {requestMessage}
+                        </div>
+                    )}
+
+                    {!user && (
+                        <p style={{ marginTop: '15px', textAlign: 'center', color: '#666' }}>
+                            You must be logged in to request books
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {listing.status !== 'available' && (
+                <div style={{
+                    padding: '15px',
+                    backgroundColor: '#fff3cd',
+                    color: '#856404',
+                    borderRadius: '4px',
+                    textAlign: 'center'
+                }}>
+                    This book has already been allocated to another student
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default BookDetail;
+
+
+

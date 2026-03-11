@@ -1,0 +1,204 @@
+File Name: bookRequests.ts
+Directory Location: backend/src/database
+Original Path: backend/src/database/bookRequests.ts
+
+// Database operations for Book Requests
+// This file contains all operations for the book_requests table
+
+import db from '../database';
+import type { BookRequest } from '../database';
+
+// ============= BOOK REQUEST OPERATIONS =============
+
+/**
+ * Create a new book request
+ * @param listingId - Book listing ID
+ * @param recipientId - Recipient user ID
+ * @returns The newly created request
+ */
+export const createBookRequest = (
+    listingId: number,
+    recipientId: number
+): BookRequest => {
+    const now = new Date().toLocaleString();
+
+    const stmt = db.prepare(`
+    INSERT INTO book_requests (
+      listing_id, recipient_id, status, created_at, updated_at
+    ) VALUES (?, ?, 'pending', ?, ?)
+  `);
+
+    const info = stmt.run(listingId, recipientId, now, now);
+
+    return {
+        id: info.lastInsertRowid as number,
+        listing_id: listingId,
+        recipient_id: recipientId,
+        status: 'pending',
+        priority_score: null,
+        admin_notes: null,
+        created_at: now,
+        updated_at: now
+    };
+};
+
+/**
+ * Get all requests for a specific listing
+ * @param listingId - Listing ID
+ * @returns Array of book requests
+ */
+export const getRequestsByListing = (listingId: number): BookRequest[] => {
+    const stmt = db.prepare(`
+    SELECT * FROM book_requests 
+    WHERE listing_id = ? 
+    ORDER BY priority_score DESC NULLS LAST, created_at ASC
+  `);
+    return stmt.all(listingId) as BookRequest[];
+};
+
+/**
+ * Get all requests by a specific recipient
+ * @param recipientId - Recipient user ID
+ * @returns Array of book requests
+ */
+export const getRequestsByRecipient = (recipientId: number): BookRequest[] => {
+    const stmt = db.prepare(`
+    SELECT * FROM book_requests 
+    WHERE recipient_id = ? 
+    ORDER BY created_at DESC
+  `);
+    return stmt.all(recipientId) as BookRequest[];
+};
+
+/**
+ * Get a specific request by ID
+ * @param requestId - Request ID
+ * @returns Book request or undefined
+ */
+export const getRequestById = (requestId: number): BookRequest | undefined => {
+    const stmt = db.prepare('SELECT * FROM book_requests WHERE id = ?');
+    return stmt.get(requestId) as BookRequest | undefined;
+};
+
+/**
+ * Update priority score for a request
+ * @param requestId - Request ID
+ * @param score - Priority score
+ * @returns true if successful
+ */
+export const updatePriorityScore = (requestId: number, score: number): boolean => {
+    const now = new Date().toLocaleString();
+    const stmt = db.prepare(`
+    UPDATE book_requests 
+    SET priority_score = ?, updated_at = ?
+    WHERE id = ?
+  `);
+
+    const info = stmt.run(score, now, requestId);
+    return info.changes > 0;
+};
+
+/**
+ * Approve a book request (admin)
+ * @param requestId - Request ID
+ * @param adminNotes - Optional admin notes
+ * @returns true if successful
+ */
+export const approveRequest = (requestId: number, adminNotes?: string): boolean => {
+    const now = new Date().toLocaleString();
+    const stmt = db.prepare(`
+    UPDATE book_requests 
+    SET status = 'approved', admin_notes = ?, updated_at = ?
+    WHERE id = ? AND status = 'pending'
+  `);
+
+    const info = stmt.run(adminNotes || null, now, requestId);
+    return info.changes > 0;
+};
+
+/**
+ * Reject a book request (admin)
+ * @param requestId - Request ID
+ * @param reason - Rejection reason
+ * @returns true if successful
+ */
+export const rejectRequest = (requestId: number, reason: string): boolean => {
+    const now = new Date().toLocaleString();
+    const stmt = db.prepare(`
+    UPDATE book_requests 
+    SET status = 'rejected', admin_notes = ?, updated_at = ?
+    WHERE id = ? AND status = 'pending'
+  `);
+
+    const info = stmt.run(reason, now, requestId);
+    return info.changes > 0;
+};
+
+/**
+ * Cancel a book request (recipient)
+ * @param requestId - Request ID
+ * @param recipientId - Recipient user ID (for ownership check)
+ * @returns true if successful
+ */
+export const cancelRequest = (requestId: number, recipientId: number): boolean => {
+    const now = new Date().toLocaleString();
+    const stmt = db.prepare(`
+    UPDATE book_requests 
+    SET status = 'cancelled', updated_at = ?
+    WHERE id = ? AND recipient_id = ? AND status = 'pending'
+  `);
+
+    const info = stmt.run(now, requestId, recipientId);
+    return info.changes > 0;
+};
+
+/**
+ * Check if a recipient has already requested a listing
+ * @param listingId - Listing ID
+ * @param recipientId - Recipient user ID
+ * @returns true if request exists
+ */
+export const hasRequested = (listingId: number, recipientId: number): boolean => {
+    const stmt = db.prepare(`
+    SELECT COUNT(*) as count FROM book_requests 
+    WHERE listing_id = ? AND recipient_id = ?
+  `);
+    const result = stmt.get(listingId, recipientId) as { count: number };
+    return result.count > 0;
+};
+
+/**
+ * Get all pending requests (admin)
+ * @returns Array of all pending requests
+ */
+export const getAllPendingRequests = (): BookRequest[] => {
+    const stmt = db.prepare(`
+    SELECT * FROM book_requests 
+    WHERE status = 'pending' 
+    ORDER BY priority_score DESC NULLS LAST, created_at ASC
+  `);
+    return stmt.all() as BookRequest[];
+};
+
+/**
+ * Reject all other requests for a listing when one is approved
+ * @param listingId - Listing ID
+ * @param approvedRequestId - The approved request ID
+ * @returns Number of requests rejected
+ */
+export const rejectOtherRequests = (listingId: number, approvedRequestId: number): number => {
+    const now = new Date().toLocaleString();
+    const stmt = db.prepare(`
+    UPDATE book_requests 
+    SET status = 'rejected', 
+        admin_notes = 'Book allocated to another recipient', 
+        updated_at = ?
+    WHERE listing_id = ? AND id != ? AND status = 'pending'
+  `);
+
+    const info = stmt.run(now, listingId, approvedRequestId);
+    return info.changes;
+};
+
+
+

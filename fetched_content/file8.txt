@@ -1,0 +1,469 @@
+File Name: database.ts
+Directory Location: backend/src
+Original Path: backend/src/database.ts
+
+// Import the better-sqlite3 library for SQLite database operations
+// This is a synchronous SQLite library (faster and simpler than async alternatives)
+import Database from 'better-sqlite3';
+
+// Import path module to handle file paths in a cross-platform way
+import path from 'path';
+
+// Import bcrypt for password hashing
+import bcrypt from 'bcrypt';
+
+// Import AspireBridge schema migration
+import { runAspireBridgeMigration } from './schema';
+
+// Salt rounds for bcrypt (higher = more secure but slower)
+const SALT_ROUNDS = 12;
+
+// Create the database file path
+// __dirname is the directory where this file (database.ts) is located
+// We go up two directories (../../) to place donations.db at the project root
+const dbPath = path.join(__dirname, '../../donations.db');
+
+// Initialize a new SQLite database connection
+// If the file doesn't exist, it will be created automatically
+const db = new Database(dbPath);
+
+// Enable foreign key constraints in SQLite
+// This ensures referential integrity (though we don't use foreign keys in this simple app)
+// It's a good practice to enable this for more complex database schemas
+db.pragma('foreign_keys = ON');
+
+// SQL queries to create the tables if they don't already exist
+// CREATE TABLE IF NOT EXISTS prevents errors if the table already exists
+
+// Create users table for authentication
+const createUsersTable = `
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'client',
+    profile_picture TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
+// Create sessions table for express-session storage
+// Note: Column must be named 'expire' (not 'expired') to match better-sqlite3-session-store expectations
+const createSessionsTable = `
+  CREATE TABLE IF NOT EXISTS sessions (
+    sid TEXT PRIMARY KEY,
+    sess TEXT NOT NULL,
+    expire INTEGER NOT NULL
+  )
+`;
+
+// Create indexes for faster lookups
+const createIndexes = `
+  CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_sessions_expire ON sessions(expire);
+`;
+
+// Execute the CREATE TABLE queries
+db.exec(createUsersTable);
+db.exec(createSessionsTable);
+db.exec(createIndexes);
+
+// Check if donations table exists and if it has user_id column
+const tableInfo = db.prepare("PRAGMA table_info(donations)").all() as Array<{ name: string }>;
+const hasUserIdColumn = tableInfo.some(col => col.name === 'user_id');
+
+if (tableInfo.length === 0) {
+  // Table doesn't exist, create it with user_id column
+  const createDonationsTable = `
+    CREATE TABLE donations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      amount REAL NOT NULL,
+      timestamp TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    )
+  `;
+  db.exec(createDonationsTable);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_donations_user_id ON donations(user_id)');
+} else if (!hasUserIdColumn) {
+  // Table exists but doesn't have user_id column, add it
+  db.exec('ALTER TABLE donations ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_donations_user_id ON donations(user_id)');
+}
+
+// Run AspireBridge migration (creates new tables, renames donations, adds user_type)
+runAspireBridgeMigration(db);
+
+
+// TypeScript interface defining the shape of a Donation object
+// This ensures type safety when working with donation data
+export interface Donation {
+  id: number;          // Unique identifier
+  user_id: number | null; // ID of user who made donation (null for anonymous/legacy)
+  name: string;        // Donor's name
+  email: string;       // Donor's email
+  amount: number;      // Donation amount
+  timestamp: string;   // When donation was made (formatted as string)
+}
+
+// TypeScript interface for User (includes password hash)
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  password_hash: string;
+  role: 'admin' | 'client';
+  user_type: 'donor' | 'recipient' | 'both';  // Added for AspireBridge
+  profile_picture: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Public user interface (without password hash)
+export interface UserPublic {
+  id: number;
+  username: string;
+  email: string;
+  role: 'admin' | 'client';
+  user_type?: 'donor' | 'recipient' | 'both';  // Added for AspireBridge
+  profile_picture: string | null;
+  created_at: string;
+}
+
+// ============= ASPIREBRIDGE INTERFACES =============
+
+// Book Listing interface
+export interface BookListing {
+  id: number;
+  donor_id: number;
+  title: string;
+  description: string | null;
+  exam_type: string;  // 'JEE', 'NEET', 'Other'
+  subjects: string;   // JSON array of subjects
+  condition: string;  // 'Excellent', 'Good', 'Fair'
+  year_used: string | null;
+  location_city: string;
+  location_state: string;
+  status: 'available' | 'allocated' | 'shipped' | 'delivered';
+  allocated_to: number | null;
+  images: string | null;  // JSON array of image filenames
+  created_at: string;
+  updated_at: string;
+}
+
+// Recipient Profile interface
+export interface RecipientProfile {
+  id: number;
+  user_id: number;
+  full_name: string;
+  phone_number: string;
+  date_of_birth: string;
+  current_class: string;  // '11th', '12th', 'Dropper'
+  target_exam: string;    // 'JEE', 'NEET', 'Both'
+  tenth_percentage: number;
+  tenth_board: string;    // 'CBSE', 'ICSE', 'State Board'
+  tenth_marksheet_file: string | null;
+  school_id: number | null;
+  school_name: string;
+  school_address: string;
+  school_city: string;
+  school_state: string;
+  school_pincode: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
+  verified_by: number | null;
+  verified_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Book Request interface
+export interface BookRequest {
+  id: number;
+  listing_id: number;
+  recipient_id: number;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  priority_score: number | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// School interface
+export interface School {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  board: string | null;
+  verified: boolean;
+  created_at: string;
+}
+
+// Shipment interface
+export interface Shipment {
+  id: number;
+  listing_id: number;
+  donor_id: number;
+  recipient_id: number;
+  school_id: number;
+  tracking_number: string | null;
+  courier_service: string | null;
+  estimated_cost: number | null;
+  actual_cost: number | null;
+  funded_by_platform: boolean;
+  status: 'pending' | 'shipped' | 'in_transit' | 'delivered';
+  shipped_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Notification interface
+export interface Notification {
+  id: number;
+  user_id: number;
+  type: string;
+  title: string;
+  message: string;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+
+// Function to retrieve all donations from the database
+// Returns an array of Donation objects
+export const getAllDonations = (): Donation[] => {
+  // Prepare a SQL SELECT statement
+  // ORDER BY id DESC returns newest donations first (highest ID first)
+  const stmt = db.prepare('SELECT * FROM donations ORDER BY id DESC');
+
+  // Execute the statement and get all results
+  // stmt.all() returns an array of objects
+  // We cast it as Donation[] to tell TypeScript the expected type
+  return stmt.all() as Donation[];
+};
+
+// Function to add a new donation to the database
+// Parameters: name, email, amount, and optional userId
+// Returns: The newly created Donation object with its generated ID
+export const addDonation = (name: string, email: string, amount: number, userId?: number): Donation => {
+  // Create a timestamp for when this donation is being recorded
+  // toLocaleString() formats the date/time in a human-readable way
+  const timestamp = new Date().toLocaleString();
+
+  // Prepare an INSERT statement with placeholders (?)
+  // Placeholders prevent SQL injection attacks
+  const stmt = db.prepare(
+    'INSERT INTO donations (user_id, name, email, amount, timestamp) VALUES (?, ?, ?, ?, ?)'
+  );
+
+  // Execute the INSERT statement with actual values
+  // userId is optional - if not provided, it will be null in the database
+  const info = stmt.run(userId || null, name, email, amount, timestamp);
+
+  // Return the newly created donation object
+  return {
+    id: info.lastInsertRowid as number,
+    user_id: userId || null,
+    name,
+    email,
+    amount,
+    timestamp
+  };
+};
+
+// Function to delete a donation by its ID
+// Parameters: id of the donation to delete, optional userId for ownership check
+// Returns: boolean - true if deletion was successful, false if no row was deleted
+export const deleteDonation = (id: number, userId?: number): boolean => {
+  if (userId !== undefined) {
+    // If userId provided, check ownership (user can only delete their own donations)
+    const stmt = db.prepare('DELETE FROM donations WHERE id = ? AND user_id = ?');
+    const info = stmt.run(id, userId);
+    return info.changes > 0;
+  } else {
+    // If no userId provided (admin path or legacy), delete any donation
+    const stmt = db.prepare('DELETE FROM donations WHERE id = ?');
+    const info = stmt.run(id);
+    return info.changes > 0;
+  }
+};
+
+// Function to calculate the total sum of all donations
+// Returns: number - the total amount of all donations combined
+export const getTotalDonations = (): number => {
+  // Prepare a SELECT statement that uses SUM() aggregate function
+  // SUM(amount) adds up all values in the amount column
+  // We alias it as 'total' for easier access in the result
+  const stmt = db.prepare('SELECT SUM(amount) as total FROM donations');
+
+  // Execute the statement and get a single result
+  // stmt.get() returns one row (unlike stmt.all() which returns multiple)
+  // We type it as an object with a 'total' property that could be number or null
+  const result = stmt.get() as { total: number | null };
+
+  // If there are no donations, SUM() returns null
+  // We use || 0 to return 0 instead of null in that case
+  return result.total || 0;
+};
+
+// ============= USER MANAGEMENT FUNCTIONS =============
+
+// Helper function to convert User to UserPublic (remove password hash)
+const toPublicUser = (user: User): UserPublic => {
+  const { password_hash, updated_at, ...publicUser } = user;
+  return publicUser;
+};
+
+// Create a new user (for registration)
+// Returns UserPublic (without password hash)
+export const createUser = async (
+  username: string,
+  email: string,
+  password: string,
+  userType: 'donor' | 'recipient' | 'both' = 'donor'
+): Promise<UserPublic> => {
+  // Hash the password using bcrypt
+  const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+  const now = new Date().toLocaleString();
+
+  const stmt = db.prepare(
+    `INSERT INTO users (username, email, password_hash, role, user_type, created_at, updated_at)
+     VALUES (?, ?, ?, 'client', ?, ?, ?)`
+  );
+
+  const info = stmt.run(username, email, password_hash, userType, now, now);
+
+  return {
+    id: info.lastInsertRowid as number,
+    username,
+    email,
+    role: 'client',
+    user_type: userType,
+    profile_picture: null,
+    created_at: now
+  };
+};
+
+// Get user by username (for login)
+export const getUserByUsername = (username: string): User | undefined => {
+  const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
+  return stmt.get(username) as User | undefined;
+};
+
+// Get user by ID (for session validation)
+export const getUserById = (id: number): User | undefined => {
+  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+  return stmt.get(id) as User | undefined;
+};
+
+// Get user by email
+export const getUserByEmail = (email: string): User | undefined => {
+  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
+  return stmt.get(email) as User | undefined;
+};
+
+// Update user profile (username and/or email)
+export const updateUserProfile = (
+  userId: number,
+  updates: { username?: string; email?: string }
+): UserPublic | null => {
+  const now = new Date().toLocaleString();
+  const fields: string[] = [];
+  const values: any[] = [];
+
+  if (updates.username !== undefined) {
+    fields.push('username = ?');
+    values.push(updates.username);
+  }
+
+  if (updates.email !== undefined) {
+    fields.push('email = ?');
+    values.push(updates.email);
+  }
+
+  if (fields.length === 0) {
+    // No updates provided
+    const user = getUserById(userId);
+    return user ? toPublicUser(user) : null;
+  }
+
+  fields.push('updated_at = ?');
+  values.push(now);
+  values.push(userId);
+
+  const stmt = db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`);
+  const info = stmt.run(...values);
+
+  if (info.changes === 0) {
+    return null;
+  }
+
+  const user = getUserById(userId);
+  return user ? toPublicUser(user) : null;
+};
+
+// Update user password
+export const updateUserPassword = async (
+  userId: number,
+  newPassword: string
+): Promise<boolean> => {
+  const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  const now = new Date().toLocaleString();
+
+  const stmt = db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?');
+  const info = stmt.run(password_hash, now, userId);
+
+  return info.changes > 0;
+};
+
+// Update profile picture filename
+export const updateProfilePicture = (
+  userId: number,
+  filename: string
+): boolean => {
+  const now = new Date().toLocaleString();
+  const stmt = db.prepare('UPDATE users SET profile_picture = ?, updated_at = ? WHERE id = ?');
+  const info = stmt.run(filename, now, userId);
+
+  return info.changes > 0;
+};
+
+// Delete user account
+export const deleteUser = (userId: number): boolean => {
+  const stmt = db.prepare('DELETE FROM users WHERE id = ?');
+  const info = stmt.run(userId);
+
+  return info.changes > 0;
+};
+
+// Get donations by user ID
+export const getDonationsByUser = (userId: number): Donation[] => {
+  const stmt = db.prepare('SELECT * FROM donations WHERE user_id = ? ORDER BY id DESC');
+  return stmt.all(userId) as Donation[];
+};
+
+// Verify password (for login and sensitive operations)
+export const verifyPassword = async (
+  plainPassword: string,
+  passwordHash: string
+): Promise<boolean> => {
+  return await bcrypt.compare(plainPassword, passwordHash);
+};
+
+// Export the database connection as the default export
+// This allows other files to access the raw database if needed
+// (though in this app, we primarily use the exported functions above)
+export default db;
+
+

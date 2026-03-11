@@ -1,0 +1,14 @@
+File Name: tsconfig.json
+Directory Location: frontend
+Original Path: frontend/tsconfig.json
+
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+
+

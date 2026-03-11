@@ -1,0 +1,36 @@
+File Name: better-sqlite3-session-store.d.ts
+Directory Location: backend/src/types
+Original Path: backend/src/types/better-sqlite3-session-store.d.ts
+
+// Type declaration file for better-sqlite3-session-store
+// This module doesn't have official TypeScript types, so we declare them manually
+
+// Declare the module to satisfy TypeScript
+declare module 'better-sqlite3-session-store' {
+  // Import types from express-session
+  import session from 'express-session';
+
+  // Import Database type from better-sqlite3
+  import Database from 'better-sqlite3';
+
+  // Configuration options for the session store
+  interface SqliteStoreOptions {
+    client: Database.Database;  // The better-sqlite3 database instance
+    expired?: {
+      clear?: boolean;          // Whether to automatically clear expired sessions
+      intervalMs?: number;      // How often to check for expired sessions (in milliseconds)
+    };
+  }
+
+  // The SqliteStore class constructor
+  // It takes the session module as a parameter and returns a store constructor
+  function SqliteStore(session: typeof session): {
+    new (options: SqliteStoreOptions): session.Store;
+  };
+
+  // Export as default
+  export = SqliteStore;
+}
+
+
+

@@ -1,0 +1,137 @@
+File Name: notifications.ts
+Directory Location: backend/src/database
+Original Path: backend/src/database/notifications.ts
+
+// Database operations for Notifications
+// This file contains all operations for the notifications table
+
+import db from '../database';
+import type { Notification } from '../database';
+
+// ============= NOTIFICATION OPERATIONS =============
+
+/**
+ * Create a new notification
+ * @param userId - User ID to notify
+ * @param type - Notification type
+ * @param title - Notification title
+ * @param message - Notification message
+ * @param link - Optional link to related page
+ * @returns The newly created notification
+ */
+export const createNotification = (
+    userId: number,
+    type: string,
+    title: string,
+    message: string,
+    link?: string
+): Notification => {
+    const now = new Date().toLocaleString();
+
+    const stmt = db.prepare(`
+    INSERT INTO notifications (
+      user_id, type, title, message, link, read, created_at
+    ) VALUES (?, ?, ?, ?, ?, 0, ?)
+  `);
+
+    const info = stmt.run(userId, type, title, message, link || null, now);
+
+    return {
+        id: info.lastInsertRowid as number,
+        user_id: userId,
+        type,
+        title,
+        message,
+        link: link || null,
+        read: false,
+        created_at: now
+    };
+};
+
+/**
+ * Get notifications for a user
+ * @param userId - User ID
+ * @param unreadOnly - If true, only return unread notifications
+ * @returns Array of notifications
+ */
+export const getNotifications = (userId: number, unreadOnly: boolean = false): Notification[] => {
+    let query = 'SELECT * FROM notifications WHERE user_id = ?';
+
+    if (unreadOnly) {
+        query += ' AND read = 0';
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT 50';
+
+    const stmt = db.prepare(query);
+    return stmt.all(userId) as Notification[];
+};
+
+/**
+ * Mark a notification as read
+ * @param notificationId - Notification ID
+ * @param userId - User ID (for ownership check)
+ * @returns true if successful
+ */
+export const markAsRead = (notificationId: number, userId: number): boolean => {
+    const stmt = db.prepare(`
+    UPDATE notifications 
+    SET read = 1 
+    WHERE id = ? AND user_id = ?
+  `);
+
+    const info = stmt.run(notificationId, userId);
+    return info.changes > 0;
+};
+
+/**
+ * Mark all notifications as read for a user
+ * @param userId - User ID
+ * @returns Number of notifications marked as read
+ */
+export const markAllAsRead = (userId: number): number => {
+    const stmt = db.prepare(`
+    UPDATE notifications 
+    SET read = 1 
+    WHERE user_id = ? AND read = 0
+  `);
+
+    const info = stmt.run(userId);
+    return info.changes;
+};
+
+/**
+ * Get unread notification count for a user
+ * @param userId - User ID
+ * @returns Number of unread notifications
+ */
+export const getUnreadCount = (userId: number): number => {
+    const stmt = db.prepare(`
+    SELECT COUNT(*) as count FROM notifications 
+    WHERE user_id = ? AND read = 0
+  `);
+    const result = stmt.get(userId) as { count: number };
+    return result.count;
+};
+
+/**
+ * Delete old notifications (cleanup)
+ * @param daysOld - Delete notifications older than this many days
+ * @returns Number of notifications deleted
+ */
+export const deleteOldNotifications = (daysOld: number = 30): number => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+    const cutoff = cutoffDate.toLocaleString();
+
+    const stmt = db.prepare(`
+    DELETE FROM notifications 
+    WHERE created_at < ? AND read = 1
+  `);
+
+    const info = stmt.run(cutoff);
+    return info.changes;
+};
+
+
+

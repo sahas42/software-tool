@@ -1,62 +1,74 @@
-import getpass
-from dotenv import load_dotenv
 import os
-from langchain_chroma import Chroma
-import bs4
+import time
 from pathlib import Path
-from langchain_community.document_loaders import WebBaseLoader
+from dotenv import load_dotenv
+from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from bs4.filter import SoupStrainer
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import TextLoader
 
-env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+# 1. Setup Environment
+current_file_dir = Path(__file__).resolve().parent
+root_dir = current_file_dir.parent.parent
+env_path = root_dir / ".env"
+
 load_dotenv(dotenv_path=env_path)
 
 api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
 if not api_key:
-    raise ValueError("GOOGLE_GEMINI_API_KEY not found in .env file")
+    raise ValueError(f"GOOGLE_GEMINI_API_KEY not found in {env_path}")
 
 os.environ["GOOGLE_API_KEY"] = api_key
 
-
+# 2. Initialize Embeddings
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
-
+# 3. Initialize Vector Store
+persist_db_path = current_file_dir / "chroma_langchain_db"
 vector_store = Chroma(
-    collection_name="example_collection",
+    collection_name="source_code_collection",
     embedding_function=embeddings,
-    persist_directory="./chroma_langchain_db",  # Where to save data locally, remove if not necessary
+    persist_directory=str(persist_db_path),
 )
 
+# 4. Load Documents
+target_dir = root_dir / "fetched_content"
+if not target_dir.exists():
+    raise FileNotFoundError(f"Could not find: {target_dir}")
 
-script_dir = Path(__file__).resolve().parent
-# This looks for the first file ending in .pdf
-pdf_files = list(script_dir.glob("*.pdf"))
+txt_files = list(target_dir.glob("*.txt"))
+all_docs = []
+for txt_path in txt_files:
+    try:
+        loader = TextLoader(str(txt_path), encoding="utf-8")
+        all_docs.extend(loader.load())
+    except Exception as e:
+        print(f"Error loading {txt_path.name}: {e}")
 
-if not pdf_files:
-    raise FileNotFoundError(f"No PDF files found in {script_dir}")
+# 5. Split and Batch Add (to avoid Quota Error)
+if all_docs:
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=150, add_start_index=True
+    )
+    all_splits = text_splitter.split_documents(all_docs)
 
-# Pick the first PDF found
-target_pdf = pdf_files[0]
-print(f"Loading PDF: {target_pdf.name}")
+    total_chunks = len(all_splits)
+    # Gemini Free Tier limit is ~100 requests/min. We'll use batches of 90.
+    batch_size = 90
 
-loader = PyPDFLoader(str(target_pdf))
-docs = loader.load()
+    print(f"Found {len(txt_files)} files. Split into {total_chunks} chunks.")
+    print(f"Adding chunks in batches of {batch_size} to avoid rate limits...")
 
-print(f"Loaded {len(docs)} pages from PDF.")
+    for i in range(0, total_chunks, batch_size):
+        batch = all_splits[i : i + batch_size]
+        vector_store.add_documents(documents=batch)
 
+        remaining = total_chunks - (i + len(batch))
+        print(f"Indexed {i + len(batch)}/{total_chunks} chunks. {remaining} left...")
 
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,  # chunk size (characters)
-    chunk_overlap=200,  # chunk overlap (characters)
-    add_start_index=True,  # track index in original document
-)
-all_splits = text_splitter.split_documents(docs)
+        if remaining > 0:
+            # Wait 60 seconds between batches to reset the 1-minute quota
+            print("Waiting 60 seconds to reset API quota...")
+            time.sleep(60)
 
-print(f"Split blog post into {len(all_splits)} sub-documents.")
-
-
-document_ids = vector_store.add_documents(documents=all_splits)
-
-print(document_ids[:3])
+    print(f"Indexing complete. Data saved to {persist_db_path}")

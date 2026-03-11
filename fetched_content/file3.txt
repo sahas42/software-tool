@@ -1,0 +1,378 @@
+File Name: IMPLEMENTATION_PLAN.md
+Directory Location: .
+Original Path: IMPLEMENTATION_PLAN.md
+
+# Implementation Plan: Login & User Management for Donation App
+
+## Overview
+Add complete authentication, user management, and authorization to the donation app. Users will be able to register, login, manage their profiles, and only delete their own donations.
+
+## Current State (donation-app-02-sqlite)
+- Full-stack TypeScript app (Express backend + React frontend)
+- SQLite database with single `donations` table (id, name, email, amount, timestamp)
+- No authentication or user management
+- Anyone can view/create/delete any donation
+
+## Target State (donation-app-03-login)
+- User registration and login with password authentication
+- Session-based authentication with HttpOnly cookies
+- Settings page: update profile, change password, upload profile picture, delete account
+- Users can only delete their own donations
+- Database with users table (role: admin/client, default: client)
+- Admin functionality ready for next iteration
+
+---
+
+## Architecture Decisions
+
+### 1. **Authentication: Session-Based (not JWT)**
+- **Why:** Simpler for same-origin apps, more secure (HttpOnly cookies), easier to revoke
+- **Tech:** express-session + better-sqlite3-session-store + bcrypt (12 rounds)
+- **Session Storage:** SQLite (survives restarts, no memory limitations)
+
+### 2. **Profile Pictures: Filesystem (not database)**
+- **Why:** Better performance, standard practice, easy to cache
+- **Storage:** `backend/uploads/profiles/user_{id}.{ext}`
+- **Serving:** Express static middleware
+- **Upload:** multer middleware (max 2MB, JPEG/PNG only)
+
+### 3. **Frontend Routing: React Router**
+- **Routes:** `/` (donations), `/login`, `/register`, `/settings`
+- **Protection:** ProtectedRoute component for authenticated-only pages
+
+### 4. **State Management: Context API**
+- **AuthContext:** Global auth state (user, login, logout, register)
+- **Why:** Built-in, perfect for single global state, simpler than Redux
+
+---
+
+## Database Schema Changes
+
+### New Tables
+
+**users table:**
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'client',  -- 'admin' or 'client'
+  profile_picture TEXT,                  -- filename (e.g., "user_5.jpg")
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+**sessions table:**
+```sql
+CREATE TABLE sessions (
+  sid TEXT PRIMARY KEY,
+  sess TEXT NOT NULL,
+  expired INTEGER NOT NULL
+);
+```
+
+### Modified Table
+
+**donations table:**
+```sql
+-- Add user_id column (nullable for existing donations)
+ALTER TABLE donations ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+```
+
+**Migration Strategy:** Existing donations keep `user_id = NULL` (anonymous/legacy donations)
+
+---
+
+## Backend Changes
+
+### New Dependencies
+```json
+{
+  "express-session": "^1.18.1",
+  "better-sqlite3-session-store": "^1.0.0",
+  "bcrypt": "^5.1.1",
+  "multer": "^1.4.5-lts.1"
+}
+```
+
+### New Files
+
+**backend/src/middleware/auth.ts**
+- `requireAuth()` - Middleware to protect routes requiring login
+- `requireRole(role)` - Middleware for admin-only routes (future use)
+
+**backend/src/validation/auth.ts**
+- `validateRegistration()` - Username, email, password validation
+- Password requirements: 8+ chars, uppercase, lowercase, number
+
+**backend/src/types/express-session.d.ts**
+- TypeScript session interface extension (userId, username, role)
+
+### Modified Files
+
+**backend/src/database.ts** - Add user management functions:
+- `createUser(username, email, password)` - Register new user
+- `getUserByUsername(username)` - For login
+- `getUserById(id)` - For session validation
+- `updateUserProfile(userId, updates)` - Edit profile
+- `updateUserPassword(userId, newPassword)` - Change password
+- `updateProfilePicture(userId, filename)` - Save profile pic filename
+- `deleteUser(userId)` - Delete account
+- Modify `addDonation()` to accept optional `userId`
+- Modify `deleteDonation(id, userId)` to check ownership
+
+**backend/src/server.ts** - Add authentication endpoints:
+
+**Auth endpoints:**
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Login
+- `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Get current user (check if logged in)
+
+**Settings endpoints (protected):**
+- `PUT /api/user/profile` - Update username/email
+- `PUT /api/user/password` - Change password
+- `POST /api/user/profile-picture` - Upload profile picture (multer)
+- `DELETE /api/user/account` - Delete account
+
+**Modified endpoints:**
+- `POST /api/donations` - Auto-associate with logged-in user
+- `DELETE /api/donations/:id` - Check ownership before deleting
+
+**Static serving:**
+- `app.use('/api/uploads', express.static('uploads'))` - Serve profile pictures
+
+**Session configuration:**
+```typescript
+app.use(session({
+  store: new SqliteStore({ client: db }),
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000  // 24 hours
+  }
+}));
+```
+
+**CORS configuration:**
+```typescript
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true  // Critical for cookies!
+}));
+```
+
+---
+
+## Frontend Changes
+
+### New Dependencies
+```json
+{
+  "react-router-dom": "^7.6.3"
+}
+```
+
+### New Files
+
+**frontend/src/contexts/AuthContext.tsx**
+- AuthContext and AuthProvider
+- State: `user`, `loading`
+- Functions: `login()`, `register()`, `logout()`, `updateUser()`
+- Auto-check auth status on mount (GET /api/auth/me)
+
+**frontend/src/components/Auth/Login.tsx**
+- Login form (username, password)
+- Calls `login()` from AuthContext
+- Redirects to home on success
+
+**frontend/src/components/Auth/Register.tsx**
+- Registration form (username, email, password, confirm password)
+- Client-side validation
+- Calls `register()` from AuthContext
+
+**frontend/src/components/Navigation/Navbar.tsx**
+- Navigation bar with links
+- Shows Login/Register when logged out
+- Shows Settings/Logout when logged in
+
+**frontend/src/components/Settings/Settings.tsx**
+- Main settings page (protected route)
+- Tabs or sections for: Profile, Password, Picture, Delete Account
+
+**frontend/src/components/Settings/ProfileForm.tsx**
+- Edit username/email
+- PUT /api/user/profile
+
+**frontend/src/components/Settings/PasswordForm.tsx**
+- Current password, new password, confirm password
+- PUT /api/user/password
+
+**frontend/src/components/Settings/ProfilePicture.tsx**
+- Display current picture or default avatar
+- File upload with preview
+- POST /api/user/profile-picture (FormData)
+
+**frontend/src/components/Settings/DeleteAccount.tsx**
+- Danger zone with confirmation
+- DELETE /api/user/account
+
+**frontend/src/components/ProtectedRoute.tsx**
+- Wrapper component for authenticated-only routes
+- Redirects to /login if not authenticated
+
+**frontend/src/pages/DonationPage.tsx**
+- Current App.tsx donation logic moved here
+- Auto-fill form if logged in
+- Conditional delete buttons (only for own donations)
+
+### Modified Files
+
+**frontend/src/App.tsx**
+- Add React Router with routes
+- Wrap with BrowserRouter
+- Include Navbar
+
+**Routes:**
+```typescript
+<Routes>
+  <Route path="/" element={<DonationPage />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/register" element={<Register />} />
+  <Route path="/settings" element={
+    <ProtectedRoute><Settings /></ProtectedRoute>
+  } />
+</Routes>
+```
+
+**frontend/src/main.tsx**
+- Wrap app with AuthProvider:
+```typescript
+<AuthProvider>
+  <App />
+</AuthProvider>
+```
+
+**Important:** All fetch requests must include `credentials: 'include'` to send session cookies!
+
+---
+
+## Security Features
+
+✅ **Password Hashing:** bcrypt with 12 salt rounds
+✅ **SQL Injection Prevention:** Parameterized queries
+✅ **XSS Prevention:** React escaping + HttpOnly cookies
+✅ **CSRF Protection:** SameSite cookie attribute
+✅ **Input Validation:** Client-side and server-side
+✅ **File Upload Security:** Type/size restrictions
+✅ **Authorization:** Ownership checks before deletion
+✅ **Environment Variables:** SESSION_SECRET in .env (gitignored)
+
+---
+
+## Implementation Sequence
+
+### Phase 1: Setup & Backend Foundation
+1. Copy donation-app-02-sqlite → donation-app-03-login
+2. Install backend dependencies
+3. Create database migration (add tables, modify donations)
+4. Implement user database functions in database.ts
+5. Add bcrypt password utilities
+
+### Phase 2: Backend Authentication
+6. Configure express-session with SQLite store
+7. Create auth middleware (requireAuth, requireRole)
+8. Implement auth endpoints (register, login, logout, me)
+9. Test auth flow with Postman/curl
+
+### Phase 3: Backend Settings & Upload
+10. Create uploads/profiles directory
+11. Configure multer for file uploads
+12. Implement settings endpoints (profile, password, picture, account deletion)
+13. Add static file serving
+14. Modify donation endpoints (add user_id, check ownership)
+
+### Phase 4: Frontend Auth Infrastructure
+15. Install react-router-dom
+16. Create AuthContext with provider
+17. Implement login/register/logout in context
+18. Wrap app with AuthProvider and BrowserRouter
+
+### Phase 5: Frontend Auth UI
+19. Create Login component
+20. Create Register component
+21. Create Navbar component
+22. Create ProtectedRoute component
+23. Add routing to App.tsx
+
+### Phase 6: Frontend Settings
+24. Create Settings page layout
+25. Create ProfileForm component
+26. Create PasswordForm component
+27. Create ProfilePicture component
+28. Create DeleteAccount component
+
+### Phase 7: Frontend Donation Integration
+29. Move donation logic to DonationPage.tsx
+30. Auto-fill form for logged-in users
+31. Conditional delete buttons (ownership check)
+
+### Phase 8: Testing & Polish
+32. Test complete user flows (register, login, settings, donations)
+33. Add error handling and loading states
+34. Style improvements
+35. Update README
+
+---
+
+## Critical Files to Modify
+
+1. **backend/src/database.ts** - User CRUD + modified donation functions
+2. **backend/src/server.ts** - Auth endpoints + session config + middleware
+3. **backend/src/middleware/auth.ts** - Authentication middleware
+4. **frontend/src/contexts/AuthContext.tsx** - Global auth state
+5. **frontend/src/App.tsx** - Routing configuration
+
+---
+
+## Testing Checklist
+
+**Backend (Postman/curl):**
+- [ ] Register with valid data → success
+- [ ] Register with duplicate username → 400 error
+- [ ] Login with valid credentials → session created
+- [ ] Login with invalid credentials → 401 error
+- [ ] Access protected route without login → 401 error
+- [ ] Update profile while logged in → success
+- [ ] Change password with correct current password → success
+- [ ] Upload profile picture → file saved, filename in DB
+- [ ] Delete own donation → success
+- [ ] Attempt to delete other's donation → 403 error
+- [ ] Delete account → user removed, donations remain with NULL user_id
+
+**Frontend (Browser):**
+- [ ] Register flow → redirects to home, auto-logged in
+- [ ] Login flow → redirects to home, navbar updates
+- [ ] Settings page accessible when logged in
+- [ ] All settings forms work (profile, password, picture, delete)
+- [ ] Donation form auto-fills for logged-in users
+- [ ] Delete buttons only show for own donations
+- [ ] Logout clears session and redirects
+
+---
+
+## Notes
+
+- Existing donations will have `user_id = NULL` (preserved as anonymous/legacy)
+- Admin functionality is prepared (role field in DB) but not implemented yet
+- Profile pictures stored in `backend/uploads/profiles/` (add to .gitignore)
+- Session secret should be in `.env` file (add to .gitignore)
+- All fetch requests must use `credentials: 'include'` for cookies
+
+
+

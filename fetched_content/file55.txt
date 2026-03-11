@@ -1,0 +1,75 @@
+File Name: Debug.tsx
+Directory Location: frontend/src/pages
+Original Path: frontend/src/pages/Debug.tsx
+
+// Debug component: Shows current user data for troubleshooting
+// Temporary page to help diagnose user_type issues
+
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+
+const Debug: React.FC = () => {
+    const { user } = useAuth();
+
+    if (!user) {
+        return (
+            <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+                <h1>Debug - User Info</h1>
+                <p>Not logged in</p>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+            <h1>Debug - User Info</h1>
+            <div style={{
+                backgroundColor: '#f5f5f5',
+                padding: '20px',
+                borderRadius: '8px',
+                fontFamily: 'monospace'
+            }}>
+                <h3>User Object:</h3>
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {JSON.stringify(user, null, 2)}
+                </pre>
+            </div>
+
+            <div style={{ marginTop: '30px' }}>
+                <h3>Navbar Visibility Check:</h3>
+                <ul>
+                    <li>
+                        <strong>user_type:</strong> {user.user_type || 'undefined/null'}
+                    </li>
+                    <li>
+                        <strong>Should show Create Listing?</strong>{' '}
+                        {(user.user_type === 'donor' || user.user_type === 'both') ? 'YES ✓' : 'NO ✗'}
+                    </li>
+                    <li>
+                        <strong>Should show My Profile?</strong>{' '}
+                        {(user.user_type === 'recipient' || user.user_type === 'both') ? 'YES ✓' : 'NO ✗'}
+                    </li>
+                    <li>
+                        <strong>Is Admin?</strong>{' '}
+                        {user.role === 'admin' ? 'YES ✓' : 'NO ✗'}
+                    </li>
+                </ul>
+            </div>
+
+            <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
+                <h4>If user_type is undefined/null:</h4>
+                <p>This account was created before the user_type feature was added. You need to:</p>
+                <ol>
+                    <li>Logout</li>
+                    <li>Register a new account and select "Donate books" as user type</li>
+                    <li>OR ask admin to update your account's user_type in the database</li>
+                </ol>
+            </div>
+        </div>
+    );
+};
+
+export default Debug;
+
+
+
