@@ -1,0 +1,55 @@
+File Name: createAdmin.ts
+Directory Location: backend/src/scripts
+Original Path: backend/src/scripts/createAdmin.ts
+
+// Script to create a root admin user in the database
+// Run this once to set up the initial admin account
+
+import bcrypt from 'bcrypt';
+import db from '../database';
+import { createUser } from '../database';
+
+async function createRootAdmin() {
+    try {
+        // Check if admin already exists
+        const existingAdmin = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
+
+        if (existingAdmin) {
+            console.log('❌ Admin user already exists!');
+            console.log('Username: admin');
+            console.log('If you forgot the password, delete the user and run this script again.');
+            return;
+        }
+
+        // Create admin user using the createUser function
+        const username = 'admin';
+        const email = 'admin@aspirebridge.com';
+        const password = 'admin123'; // Change this to a secure password
+
+        const user = await createUser(username, email, password, 'donor');
+
+        // Update role to admin
+        db.prepare('UPDATE users SET role = ? WHERE id = ?').run('admin', user.id);
+
+        console.log('✅ Root admin user created successfully!');
+        console.log('');
+        console.log('Login Credentials:');
+        console.log('==================');
+        console.log('Username: admin');
+        console.log('Password: admin123');
+        console.log('Email: admin@aspirebridge.com');
+        console.log('');
+        console.log('⚠️  IMPORTANT: Change the password after first login!');
+        console.log('');
+        console.log(`User ID: ${user.id}`);
+
+    } catch (error) {
+        console.error('❌ Error creating admin user:', error);
+    }
+}
+
+// Run the script
+createRootAdmin();
+
+
+

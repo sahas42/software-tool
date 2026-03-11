@@ -1,62 +1,69 @@
-import getpass
-from dotenv import load_dotenv
 import os
-from langchain_chroma import Chroma
-import bs4
 from pathlib import Path
-from langchain_community.document_loaders import WebBaseLoader
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from dotenv import load_dotenv
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from bs4.filter import SoupStrainer
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import TextLoader
 
-env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+# 1. Setup Environment Paths (Cross-platform using Pathlib)
+current_file_dir = Path(__file__).resolve().parent
+root_dir = current_file_dir.parent.parent
+env_path = root_dir / ".env"
+
 load_dotenv(dotenv_path=env_path)
 
-api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GOOGLE_GEMINI_API_KEY not found in .env file")
+# 2. Initialize Local Embeddings
+# This will auto-download the model on any teammate's machine on the first run.
+print("Loading local embedding model (BGE-Small)...")
+embeddings = HuggingFaceEmbeddings(
+    model_name="BAAI/bge-small-en-v1.5",
+    model_kwargs={"device": "cpu"},  # Works on all Linux/Mac/Win machines
+)
 
-os.environ["GOOGLE_API_KEY"] = api_key
-
-
-embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-
-
+# 3. Initialize Vector Store
+# Path is relative to the script so it works on any PC
+persist_db_path = current_file_dir / "chroma_langchain_db"
 vector_store = Chroma(
-    collection_name="example_collection",
+    collection_name="source_code_collection",
     embedding_function=embeddings,
-    persist_directory="./chroma_langchain_db",  # Where to save data locally, remove if not necessary
+    persist_directory=str(persist_db_path),
 )
 
+# 4. Target the fetched_content folder
+target_dir = root_dir / "fetched_content"
 
-script_dir = Path(__file__).resolve().parent
-# This looks for the first file ending in .pdf
-pdf_files = list(script_dir.glob("*.pdf"))
+if not target_dir.exists():
+    print(f"Error: Could not find directory at {target_dir}")
+    exit(1)
 
-if not pdf_files:
-    raise FileNotFoundError(f"No PDF files found in {script_dir}")
+# Find all .txt files
+txt_files = list(target_dir.glob("*.txt"))
 
-# Pick the first PDF found
-target_pdf = pdf_files[0]
-print(f"Loading PDF: {target_pdf.name}")
+if not txt_files:
+    print(f"No .txt files found in {target_dir}")
+    all_docs = []
+else:
+    print(f"Found {len(txt_files)} files in {target_dir.name}/")
+    all_docs = []
+    for txt_path in txt_files:
+        try:
+            loader = TextLoader(str(txt_path), encoding="utf-8")
+            all_docs.extend(loader.load())
+        except Exception as e:
+            print(f"Error loading {txt_path.name}: {e}")
 
-loader = PyPDFLoader(str(target_pdf))
-docs = loader.load()
+# 5. Standard Splitting and Fast Indexing
+if all_docs:
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=150, add_start_index=True
+    )
 
-print(f"Loaded {len(docs)} pages from PDF.")
+    all_splits = text_splitter.split_documents(all_docs)
 
-
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,  # chunk size (characters)
-    chunk_overlap=200,  # chunk overlap (characters)
-    add_start_index=True,  # track index in original document
-)
-all_splits = text_splitter.split_documents(docs)
-
-print(f"Split blog post into {len(all_splits)} sub-documents.")
-
-
-document_ids = vector_store.add_documents(documents=all_splits)
-
-print(document_ids[:3])
+    print(f"Adding {len(all_splits)} chunks to local ChromaDB...")
+    # No batching needed for local models - it's very fast!
+    vector_store.add_documents(documents=all_splits)
+    print(f"Indexing complete. Database saved to: {persist_db_path}")
+else:
+    print("Nothing to index.")

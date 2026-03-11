@@ -1,0 +1,108 @@
+File Name: main.tsx
+Directory Location: frontend/src
+Original Path: frontend/src/main.tsx
+
+// Import StrictMode from the react library
+// StrictMode is a tool for highlighting potential problems in an application
+// It activates additional checks and warnings for its descendants
+// Note: StrictMode only runs in development mode, not in production
+import { StrictMode } from 'react'
+
+// Import createRoot from react-dom/client
+// This is part of React 18's new Root API for client-side rendering
+// It replaces the legacy ReactDOM.render() method from React 17
+import { createRoot } from 'react-dom/client'
+
+// Import the global CSS file
+// This file contains styles that apply to the entire application
+// Typically includes CSS resets, base styles, and global typography
+import './index.css'
+
+// Import our main App component
+// This is the root component of our application that contains all the UI
+import App from './App.tsx'
+
+// Import AuthProvider to wrap the app with authentication context
+// This makes user authentication state available to all components
+import { AuthProvider } from './contexts/AuthContext'
+
+// Find the DOM element where we want to mount our React application
+// document.getElementById('root') looks for <div id="root"></div> in index.html
+// The ! is TypeScript's non-null assertion operator
+// It tells TypeScript: "I guarantee this element exists, don't worry about null"
+// This is safe because we control the HTML and know the root div exists
+const rootElement = document.getElementById('root')!;
+
+// Create a React root using the DOM element we found
+// createRoot is the React 18 way to create a root for rendering
+// This root becomes the connection point between React and the browser DOM
+// Benefits of createRoot over legacy render:
+// - Enables concurrent features (automatic batching, transitions)
+// - Better performance
+// - Supports future React features
+const root = createRoot(rootElement);
+
+// Render our React application into the root
+// .render() takes JSX and converts it into actual DOM elements
+// Everything inside render() becomes part of the web page
+root.render(
+  // StrictMode wrapper component
+  // Wrapping the app in StrictMode enables additional development checks:
+  // 1. Identifies components with unsafe lifecycles
+  // 2. Warns about legacy string ref API usage
+  // 3. Warns about deprecated findDOMNode usage
+  // 4. Detects unexpected side effects by double-invoking certain functions
+  // 5. Detects legacy context API
+  // Important: These checks only run in development, not production
+  <StrictMode>
+    {/* AuthProvider wraps the entire app to provide authentication context */}
+    {/* This makes user authentication state and functions available to all components */}
+    {/* Any component can use the useAuth() hook to access login state */}
+    <AuthProvider>
+      {/* Our main App component */}
+      {/* App now has access to authentication context from AuthProvider */}
+      {/* Everything our app displays comes from this component */}
+      <App />
+    </AuthProvider>
+  </StrictMode>,
+  // Note: The comma after </StrictMode> is part of the render() method call
+  // render() only takes one argument - the JSX to render
+)
+
+// === EXECUTION FLOW ===
+// 1. Browser loads index.html
+// 2. index.html contains <div id="root"></div> and loads this script
+// 3. This script finds the root div
+// 4. Creates a React root attached to that div
+// 5. Renders the App component (wrapped in StrictMode) into the root
+// 6. React takes over and manages all DOM updates from this point forward
+
+// === WHAT HAPPENS IN THE DOM ===
+// Before React runs:
+// <div id="root"></div>
+//
+// After React runs:
+// <div id="root">
+//   <div class="App">
+//     <div class="container">
+//       <h1>Donation Form (SQLite Persistent)</h1>
+//       <!-- All the App component's JSX gets rendered here -->
+//     </div>
+//   </div>
+// </div>
+
+// === COMPONENT HIERARCHY ===
+// main.tsx (this file)
+//   └── StrictMode (React development tool)
+//       └── App (our main application component)
+//           └── Form, Table, etc. (all UI elements)
+
+// === KEY CONCEPTS ===
+// 1. Entry Point: This file is the JavaScript entry point for the app
+// 2. Mounting: We're "mounting" React to the #root element
+// 3. Root API: React 18's createRoot enables concurrent features
+// 4. One-Way Data Flow: From this point, React controls all UI updates
+// 5. Virtual DOM: React creates a virtual representation and manages actual DOM updates
+
+
+

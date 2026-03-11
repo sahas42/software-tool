@@ -1,0 +1,280 @@
+File Name: ProfilePicture.tsx
+Directory Location: frontend/src/components/Settings
+Original Path: frontend/src/components/Settings/ProfilePicture.tsx
+
+// ProfilePicture component: Allows users to upload/change their profile picture
+// Displays current picture, shows preview of new picture before upload
+
+// Import React and useState hook
+import React, { useState } from 'react';
+
+// Import useAuth hook to access and update user data
+import { useAuth } from '../../contexts/AuthContext';
+
+// ProfilePicture functional component
+const ProfilePicture: React.FC = () => {
+  // Get user data and updateUser function from AuthContext
+  const { user, updateUser } = useAuth();
+
+  // State for selected file (before upload)
+  // File object represents the selected image file
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // State for image preview URL (data URL of selected file)
+  // This is used to show a preview before upload
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // State for success and error messages
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  // State for loading (true while upload is in progress)
+  const [loading, setLoading] = useState(false);
+
+  // Base URL for API requests
+  const API_URL = 'http://localhost:3001';
+
+  // Handle file selection from input
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear previous messages
+    setSuccess('');
+    setError('');
+
+    // Get the selected file from the input
+    // e.target.files is a FileList, we take the first file ([0])
+    const file = e.target.files?.[0];
+
+    // If no file selected (user canceled), clear state and return
+    if (!file) {
+      setSelectedFile(null);
+      setPreview(null);
+      return;
+    }
+
+    // Validate file type (must be JPEG or PNG)
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please select a JPEG or PNG image');
+      setSelectedFile(null);
+      setPreview(null);
+      return;
+    }
+
+    // Validate file size (must be <= 2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+      setError('File size must be less than 2MB');
+      setSelectedFile(null);
+      setPreview(null);
+      return;
+    }
+
+    // File is valid - save it to state
+    setSelectedFile(file);
+
+    // Create a preview URL using FileReader
+    const reader = new FileReader();
+
+    // Set up onload callback - called when file is read
+    reader.onloadend = () => {
+      // reader.result is a data URL (base64 encoded image)
+      // We can use this as img src to show a preview
+      setPreview(reader.result as string);
+    };
+
+    // Start reading the file as a data URL
+    // This triggers the onloadend callback when complete
+    reader.readAsDataURL(file);
+  };
+
+  // Handle upload button click
+  const handleUpload = async () => {
+    // If no file selected, show error
+    if (!selectedFile) {
+      setError('Please select a file first');
+      return;
+    }
+
+    // Clear previous messages
+    setSuccess('');
+    setError('');
+
+    // Set loading state
+    setLoading(true);
+
+    try {
+      // Create FormData object to send file
+      // FormData is used for multipart/form-data requests (file uploads)
+      const formData = new FormData();
+
+      // Append the file to FormData with key 'profilePicture'
+      // This key must match the multer configuration in backend
+      formData.append('profilePicture', selectedFile);
+
+      // Make POST request to upload profile picture
+      const response = await fetch(`${API_URL}/api/user/profile-picture`, {
+        method: 'POST',              // POST method for uploads
+        credentials: 'include',      // Include session cookie
+        // Note: We DON'T set Content-Type header
+        // Browser automatically sets it to multipart/form-data with boundary
+        body: formData               // Send FormData (not JSON)
+      });
+
+      // If response is not OK, throw error
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload picture');
+      }
+
+      // Parse successful response
+      const data = await response.json();
+
+      // Update user state with new profile_picture filename
+      updateUser({
+        ...user!,                      // Spread existing user data
+        profile_picture: data.profile_picture  // Update profile_picture field
+      });
+
+      // Clear selected file and preview
+      setSelectedFile(null);
+      setPreview(null);
+
+      // Show success message
+      setSuccess('Profile picture updated successfully!');
+    } catch (err) {
+      // If upload fails, show error
+      setError(err instanceof Error ? err.message : 'Failed to upload picture');
+    } finally {
+      // Stop loading state
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: '30px' }}>
+      {/* Section title */}
+      <h3>Profile Picture</h3>
+
+      {/* Display success message if picture was uploaded */}
+      {success && (
+        <div style={{
+          color: 'green',
+          backgroundColor: '#d4edda',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {success}
+        </div>
+      )}
+
+      {/* Display error message if upload failed */}
+      {error && (
+        <div style={{
+          color: 'red',
+          backgroundColor: '#ffebee',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Display current profile picture */}
+      <div style={{ marginBottom: '20px' }}>
+        <p><strong>Current Picture:</strong></p>
+        {user?.profile_picture ? (
+          /* If user has a profile picture, display it */
+          <img
+            src={`${API_URL}/api/uploads/profiles/${user.profile_picture}`}
+            alt="Profile"
+            style={{
+              width: '150px',
+              height: '150px',
+              maxWidth: '100%',
+              objectFit: 'cover',      // Crop image to fit square
+              borderRadius: '50%',     // Make it circular
+              border: '2px solid #ccc'
+            }}
+          />
+        ) : (
+          /* If no profile picture, show placeholder */
+          <div style={{
+            width: '150px',
+            height: '150px',
+            maxWidth: '100%',
+            borderRadius: '50%',
+            backgroundColor: '#ccc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '48px',
+            color: 'white'
+          }}>
+            {/* Show first letter of username as placeholder */}
+            {user?.username.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+
+      {/* File input for selecting new picture */}
+      <div style={{ marginBottom: '15px' }}>
+        <label htmlFor="profilePicture" style={{ display: 'block', marginBottom: '5px' }}>
+          Choose New Picture (JPEG/PNG, max 2MB):
+        </label>
+        <input
+          type="file"                    // file input type
+          id="profilePicture"
+          accept="image/jpeg,image/jpg,image/png"  // Only allow JPEG and PNG
+          onChange={handleFileSelect}    // Call handler when file selected
+          disabled={loading}             // Disable while uploading
+          style={{ marginBottom: '10px' }}
+        />
+      </div>
+
+      {/* Show preview of selected file before upload */}
+      {preview && (
+        <div style={{ marginBottom: '15px' }}>
+          <p><strong>Preview:</strong></p>
+          <img
+            src={preview}                 // Use the data URL as image source
+            alt="Preview"
+            style={{
+              width: '150px',
+              height: '150px',
+              maxWidth: '100%',
+              objectFit: 'cover',
+              borderRadius: '50%',
+              border: '2px solid #007bff'
+            }}
+          />
+        </div>
+      )}
+
+      {/* Upload button */}
+      <button
+        onClick={handleUpload}           // Call handleUpload when clicked
+        disabled={loading || !selectedFile}  // Disable if loading or no file selected
+        style={{
+          padding: '10px 20px',
+          fontSize: '16px',
+          backgroundColor: (loading || !selectedFile) ? '#ccc' : '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: (loading || !selectedFile) ? 'not-allowed' : 'pointer'
+        }}
+      >
+        {/* Show different text based on loading state */}
+        {loading ? 'Uploading...' : 'Upload Picture'}
+      </button>
+    </div>
+  );
+};
+
+// Export component as default
+export default ProfilePicture;
+
+
+

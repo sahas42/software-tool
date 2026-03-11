@@ -1,6 +1,5 @@
 *.egg-info/
-.venv/
 **/__pycache__/
 .env
-fetched_content.txt
+venv/
 fetched_content/

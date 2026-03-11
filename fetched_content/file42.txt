@@ -1,0 +1,154 @@
+File Name: Sidebar.tsx
+Directory Location: frontend/src/components/Navigation
+Original Path: frontend/src/components/Navigation/Sidebar.tsx
+
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import './Sidebar.css';
+
+interface SidebarProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            onClose();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
+    if (!user) return null; // Don't show sidebar if not logged in
+
+    return (
+        <>
+            {/* Overlay */}
+            <div
+                className={`sidebar-overlay ${isOpen ? 'visible' : ''}`}
+                onClick={onClose}
+            />
+
+            {/* Sidebar */}
+            <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+                <div className="sidebar-content">
+                    {/* Header with user info */}
+                    <div className="sidebar-header">
+                        <div className="sidebar-user-info">
+                            <div className="sidebar-username">{user.username}</div>
+                            <div className="sidebar-user-role">
+                                {user.role === 'admin' ? 'Administrator' :
+                                    user.user_type === 'both' ? 'Donor & Recipient' :
+                                        user.user_type === 'donor' ? 'Donor' : 'Recipient'}
+                            </div>
+                        </div>
+                        <button className="sidebar-close-btn" onClick={onClose}>
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Navigation sections */}
+                    <div className="sidebar-nav">
+                        {/* Donor Section */}
+                        {(user.user_type === 'donor' || user.user_type === 'both') && (
+                            <div className="sidebar-section">
+                                <div className="sidebar-section-title">Donor</div>
+                                <Link
+                                    to="/create-listing"
+                                    className="sidebar-link"
+                                >
+                                    <span className="sidebar-icon">➕</span>
+                                    Create Listing
+                                </Link>
+                                <Link
+                                    to="/my-listings"
+                                    className="sidebar-link"
+                                >
+                                    <span className="sidebar-icon">📚</span>
+                                    My Listings
+                                </Link>
+                            </div>
+                        )}
+
+                        {/* Recipient Section */}
+                        {(user.user_type === 'recipient' || user.user_type === 'both') && (
+                            <div className="sidebar-section">
+                                <div className="sidebar-section-title">Recipient</div>
+                                <Link
+                                    to="/recipient-profile"
+                                    className="sidebar-link"
+                                >
+                                    <span className="sidebar-icon">👤</span>
+                                    My Profile
+                                </Link>
+                                <Link
+                                    to="/my-requests"
+                                    className="sidebar-link"
+                                >
+                                    <span className="sidebar-icon">📋</span>
+                                    My Requests
+                                </Link>
+                            </div>
+                        )}
+
+                        {/* General Section */}
+                        <div className="sidebar-section">
+                            <div className="sidebar-section-title">General</div>
+                            <Link
+                                to="/notifications"
+                                className="sidebar-link"
+                            >
+                                <span className="sidebar-icon">🔔</span>
+                                Notifications
+                            </Link>
+                            <Link
+                                to="/settings"
+                                className="sidebar-link"
+                            >
+                                <span className="sidebar-icon">⚙️</span>
+                                Settings
+                            </Link>
+                        </div>
+
+                        {/* Admin Section */}
+                        {user.role === 'admin' && (
+                            <div className="sidebar-section">
+                                <div className="sidebar-section-title">Administration</div>
+                                <Link
+                                    to="/admin"
+                                    className="sidebar-link sidebar-link-admin"
+                                >
+                                    <span className="sidebar-icon">🛡️</span>
+                                    Admin Panel
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer with logout */}
+                    <div className="sidebar-footer">
+                        <button
+                            className="sidebar-logout-btn"
+                            onClick={handleLogout}
+                        >
+                            <span className="sidebar-icon">🚪</span>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+export default Sidebar;
+
+
+

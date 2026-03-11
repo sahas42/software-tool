@@ -1,0 +1,205 @@
+File Name: App.tsx
+Directory Location: frontend/src
+Original Path: frontend/src/App.tsx
+
+// App component: Main application component with routing
+// This sets up all routes and navigation for the entire app
+
+// Import routing components from react-router-dom
+// BrowserRouter: Provides routing functionality using browser history API
+// Routes: Container for all Route components
+// Route: Defines a path and the component to render for that path
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+// Import the Navbar component (shown on all pages)
+import Navbar from './components/Navigation/Navbar';
+import Sidebar from './components/Navigation/Sidebar';
+
+// Import ProtectedRoute component for routes that require authentication
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Import GuestRoute component for routes that should only be accessible when logged out
+import GuestRoute from './components/GuestRoute';
+
+// Import page components
+import Home from './pages/Home';                          // Home page (public)
+import DonationPage from './pages/DonationPage';         // Donation page (public)
+import Login from './components/Auth/Login';              // Login page
+import Register from './components/Auth/Register';        // Registration page
+import Settings from './components/Settings/Settings';    // Settings page (protected)
+import BrowseBooks from './pages/BrowseBooks';            // Browse books page (public)
+import BookDetail from './pages/BookDetail';              // Book detail page (public)
+import CreateListing from './pages/CreateListing';        // Create book listing (protected)
+import MyListings from './pages/MyListings';              // My listings page (protected)
+import RecipientProfile from './pages/RecipientProfile';  // Recipient profile (protected)
+import AdminDashboard from './pages/AdminDashboard';      // Admin dashboard (protected)
+import AdminVerifications from './pages/AdminVerifications'; // Admin verifications (protected)
+import AdminRequests from './pages/AdminRequests';        // Admin requests (protected)
+import MyRequests from './pages/MyRequests';              // My requests page (protected)
+import Notifications from './pages/Notifications';        // Notifications page (protected)
+import Debug from './pages/Debug';                        // Debug page (protected)
+
+// Import the main CSS file for styling
+import './App.css';
+import { useState } from 'react';
+
+// App functional component
+function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
+  return (
+    // BrowserRouter wraps the entire app to enable routing
+    // It provides routing context to all child components
+    <BrowserRouter>
+      {/* Navbar is outside Routes so it appears on all pages */}
+      {/* It contains navigation links and shows user's login status */}
+      <Navbar onMenuClick={toggleSidebar} />
+
+      {/* Sidebar for user-specific navigation */}
+      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
+
+      {/* Routes container - only one Route's component will render at a time */}
+      {/* Routes determines which component to show based on current URL path */}
+      <Routes>
+        {/* Route for home page */}
+        <Route path="/" element={<Home />} />
+
+        {/* Route for donation page (public) */}
+        <Route path="/donate" element={<DonationPage />} />
+
+        {/* Route for login page (only accessible when logged out) */}
+        <Route path="/login" element={
+          <GuestRoute>
+            <Login />
+          </GuestRoute>
+        } />
+
+        {/* Route for registration page (only accessible when logged out) */}
+        <Route path="/register" element={
+          <GuestRoute>
+            <Register />
+          </GuestRoute>
+        } />
+
+        {/* Route for browse books page (public) */}
+        <Route path="/books" element={<BrowseBooks />} />
+
+        {/* Route for book detail page (public) */}
+        <Route path="/books/:id" element={<BookDetail />} />
+
+        {/* Protected routes - require authentication */}
+        <Route
+          path="/create-listing"
+          element={
+            <ProtectedRoute>
+              <CreateListing />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-listings"
+          element={
+            <ProtectedRoute>
+              <MyListings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/recipient-profile"
+          element={
+            <ProtectedRoute>
+              <RecipientProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin routes - require admin role */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/verifications"
+          element={
+            <ProtectedRoute>
+              <AdminVerifications />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/requests"
+          element={
+            <ProtectedRoute>
+              <AdminRequests />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* My Requests route (PROTECTED) - for recipients */}
+        <Route
+          path="/my-requests"
+          element={
+            <ProtectedRoute>
+              <MyRequests />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Notifications route (PROTECTED) - for all users */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Route for settings page (PROTECTED) */}
+        {/* ProtectedRoute wrapper checks if user is logged in */}
+        {/* If not logged in, user is redirected to /login */}
+        {/* If logged in, Settings component is rendered */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Debug route (PROTECTED) - for troubleshooting user_type */}
+        <Route
+          path="/debug"
+          element={
+            <ProtectedRoute>
+              <Debug />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+// Export App as the default export
+export default App;
+
+
+

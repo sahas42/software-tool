@@ -1,0 +1,176 @@
+File Name: Navbar.tsx
+Directory Location: frontend/src/components/Navigation
+Original Path: frontend/src/components/Navigation/Navbar.tsx
+
+// Navbar component: Navigation bar displayed at the top of every page
+// Shows different links based on whether user is logged in or not
+
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+
+interface NavbarProps {
+  onMenuClick?: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Redirect to login page after logout
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  return (
+    <nav style={{
+      backgroundColor: '#333',
+      padding: '1rem',
+      marginBottom: '20px'
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '10px'
+      }}>
+        {/* Left side: Hamburger (if logged in), App title and public links */}
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          {/* Hamburger menu button - only show when logged in */}
+          {user && (
+            <button
+              onClick={onMenuClick}
+              style={{
+                color: 'white',
+                backgroundColor: '#555',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px'
+              }}
+              aria-label="Toggle menu"
+            >
+              ☰
+            </button>
+          )}
+
+          <Link
+            to="/"
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+              fontSize: '20px',
+              fontWeight: 'bold'
+            }}
+          >
+            AspireBridge
+          </Link>
+
+          {/* Browse Books link (public) */}
+          <Link
+            to="/books"
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+              fontSize: '14px',
+              padding: '6px 12px',
+              backgroundColor: '#17a2b8',
+              borderRadius: '4px'
+            }}
+          >
+            Browse Books
+          </Link>
+
+          {/* Donate link (public) */}
+          <Link
+            to="/donate"
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+              fontSize: '14px',
+              padding: '6px 12px',
+              backgroundColor: '#2196f3',
+              borderRadius: '4px'
+            }}
+          >
+            Donate
+          </Link>
+        </div>
+
+        {/* Right side: Navigation links (changes based on login status) */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {/* If user is logged in, show logout */}
+          {user ? (
+            <>
+              {/* Logout button */}
+              <button
+                onClick={handleLogout}
+                style={{
+                  color: 'white',
+                  backgroundColor: '#dc3545',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            /* If user is not logged in, show login and register links */
+            <>
+              <Link
+                to="/login"
+                style={{
+                  color: 'white',
+                  textDecoration: 'none',
+                  padding: '8px 16px',
+                  backgroundColor: '#007bff',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              >
+                Login
+              </Link>
+
+              <Link
+                to="/register"
+                style={{
+                  color: 'white',
+                  textDecoration: 'none',
+                  padding: '8px 16px',
+                  backgroundColor: '#28a745',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
+
+
+

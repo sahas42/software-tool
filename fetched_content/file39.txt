@@ -1,0 +1,269 @@
+File Name: Register.tsx
+Directory Location: frontend/src/components/Auth
+Original Path: frontend/src/components/Auth/Register.tsx
+
+// Register component: New user registration form
+// Allows users to create a new account with username, email, and password
+
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+
+const Register: React.FC = () => {
+  // Get the register function from AuthContext
+  const { register } = useAuth();
+
+  // Hook to navigate to different routes
+  const navigate = useNavigate();
+
+  // State for form inputs
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [userType, setUserType] = useState<'donor' | 'recipient' | 'both'>('donor');
+
+  // State for error messages
+  const [error, setError] = useState('');
+
+  // State for loading (during registration request)
+  const [loading, setLoading] = useState(false);
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default form submission behavior
+    e.preventDefault();
+
+    // Clear previous errors
+    setError('');
+
+    // Client-side validation: Check all fields are filled
+    if (!username || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    // Client-side validation: Check passwords match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Client-side validation: Check password length
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    // Set loading state
+    setLoading(true);
+
+    try {
+      // Call the register function from AuthContext with userType
+      // This makes an API request to create a new user
+      await register(username, email, password, userType);
+
+      // If registration is successful, user is automatically logged in
+      // Navigate to home page
+      navigate('/');
+    } catch (err) {
+      // If registration fails, display error message
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      // Stop loading state
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
+      <h2>Register</h2>
+
+      {/* Display error message if there is one */}
+      {error && (
+        <div style={{
+          color: 'red',
+          backgroundColor: '#ffebee',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '20px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {/* Username input */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="username" style={{ display: 'block', marginBottom: '5px' }}>
+            Username:
+          </label>
+          <input
+            type="text"
+            id="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={loading}
+            placeholder="3-20 characters, letters, numbers, underscore"
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Email input */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>
+            Email:
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* User Type Selection */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+            I want to:
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="userType"
+                value="donor"
+                checked={userType === 'donor'}
+                onChange={(e) => setUserType(e.target.value as 'donor')}
+                disabled={loading}
+                style={{ marginRight: '8px' }}
+              />
+              <span>
+                <strong>Donate books</strong> - I have study materials to share with students
+              </span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="userType"
+                value="recipient"
+                checked={userType === 'recipient'}
+                onChange={(e) => setUserType(e.target.value as 'recipient')}
+                disabled={loading}
+                style={{ marginRight: '8px' }}
+              />
+              <span>
+                <strong>Receive books</strong> - I'm a student preparing for competitive exams
+              </span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="userType"
+                value="both"
+                checked={userType === 'both'}
+                onChange={(e) => setUserType(e.target.value as 'both')}
+                disabled={loading}
+                style={{ marginRight: '8px' }}
+              />
+              <span>
+                <strong>Both</strong> - I want to donate and also request books
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* Password input */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="password" style={{ display: 'block', marginBottom: '5px' }}>
+            Password:
+          </label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            placeholder="Min 8 chars, uppercase, lowercase, number"
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Confirm password input */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: '5px' }}>
+            Confirm Password:
+          </label>
+          <input
+            type="password"
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '10px',
+            fontSize: '16px',
+            backgroundColor: loading ? '#ccc' : '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {loading ? 'Creating account...' : 'Register'}
+        </button>
+      </form>
+
+      {/* Link to login page */}
+      <p style={{ marginTop: '20px', textAlign: 'center' }}>
+        Already have an account? <Link to="/login">Login here</Link>
+      </p>
+    </div>
+  );
+};
+
+export default Register;
+
+
+

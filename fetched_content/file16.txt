@@ -1,0 +1,35 @@
+File Name: auth.ts
+Directory Location: backend/src/middleware
+Original Path: backend/src/middleware/auth.ts
+
+// Authentication middleware for protecting routes
+
+import { Request, Response, NextFunction } from 'express';
+
+// Middleware to require authentication
+// Checks if user is logged in (has valid session)
+export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  next();
+};
+
+// Middleware to require specific role
+// Usage: requireRole('admin') for admin-only routes
+export const requireRole = (role: 'admin' | 'client') => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (req.session.role !== role) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    next();
+  };
+};
+
+
+

@@ -1,0 +1,175 @@
+File Name: DeleteAccount.tsx
+Directory Location: frontend/src/components/Settings
+Original Path: frontend/src/components/Settings/DeleteAccount.tsx
+
+// DeleteAccount component: Allows users to permanently delete their account
+// This is a destructive operation with confirmation dialog
+
+// Import React and useState hook
+import React, { useState } from 'react';
+
+// Import useNavigate for programmatic navigation after deletion
+import { useNavigate } from 'react-router-dom';
+
+// Import useAuth hook to access logout function
+import { useAuth } from '../../contexts/AuthContext';
+
+// DeleteAccount functional component
+const DeleteAccount: React.FC = () => {
+  // Get logout function from AuthContext
+  const { logout } = useAuth();
+
+  // Hook for navigation
+  const navigate = useNavigate();
+
+  // State for confirmation (user must check checkbox to enable delete button)
+  const [confirmed, setConfirmed] = useState(false);
+
+  // State for error messages
+  const [error, setError] = useState('');
+
+  // State for loading (true while delete request is in progress)
+  const [loading, setLoading] = useState(false);
+
+  // Base URL for API requests
+  const API_URL = 'http://localhost:3001';
+
+  // Handle delete button click
+  const handleDelete = async () => {
+    // Double-check confirmation (in case checkbox state is wrong)
+    if (!confirmed) {
+      setError('Please confirm account deletion');
+      return;
+    }
+
+    // Show browser confirmation dialog as final safety check
+    // This is a native browser dialog that returns true if user clicks OK
+    const userConfirmed = window.confirm(
+      'Are you absolutely sure you want to delete your account? This action cannot be undone.'
+    );
+
+    // If user clicked Cancel, abort deletion
+    if (!userConfirmed) {
+      return;
+    }
+
+    // Clear previous error
+    setError('');
+
+    // Set loading state
+    setLoading(true);
+
+    try {
+      // Make DELETE request to delete account
+      const response = await fetch(`${API_URL}/api/user/account`, {
+        method: 'DELETE',           // DELETE method for resource deletion
+        credentials: 'include',     // Include session cookie for authentication
+      });
+
+      // If response is not OK, throw error
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete account');
+      }
+
+      // Account deleted successfully
+      // Logout user (clears session on frontend)
+      await logout();
+
+      // Navigate to home page
+      // User will see login/register links in navbar
+      navigate('/');
+
+      // Note: We don't set loading to false here because component will unmount
+    } catch (err) {
+      // If deletion fails, show error
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
+
+      // Stop loading state
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: '30px' }}>
+      {/* Section title with danger styling */}
+      <h3 style={{ color: '#dc3545' }}>Danger Zone</h3>
+
+      {/* Display error message if deletion failed */}
+      {error && (
+        <div style={{
+          color: 'red',
+          backgroundColor: '#ffebee',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Warning box */}
+      <div style={{
+        backgroundColor: '#fff3cd',        // Yellow background for warning
+        border: '1px solid #ffc107',       // Yellow border
+        padding: '15px',
+        borderRadius: '4px',
+        marginBottom: '15px'
+      }}>
+        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>
+          Warning: This action is permanent!
+        </p>
+        <p style={{ margin: '0' }}>
+          Deleting your account will:
+        </p>
+        <ul style={{ marginTop: '10px', marginBottom: '0' }}>
+          <li>Remove all your account data</li>
+          <li>Delete your profile and settings</li>
+          <li>Your donations will remain but will be marked as anonymous</li>
+          <li>This action cannot be undone</li>
+        </ul>
+      </div>
+
+      {/* Confirmation checkbox */}
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <input
+            type="checkbox"                                  // Checkbox input
+            checked={confirmed}                              // Controlled checkbox - value from state
+            onChange={(e) => setConfirmed(e.target.checked)} // Update state when checked/unchecked
+            disabled={loading}                               // Disable while loading
+            style={{ marginRight: '10px' }}
+          />
+          <span>
+            I understand that this action is permanent and cannot be undone
+          </span>
+        </label>
+      </div>
+
+      {/* Delete button */}
+      <button
+        onClick={handleDelete}                  // Call handleDelete when clicked
+        disabled={!confirmed || loading}        // Disable if not confirmed or loading
+        style={{
+          padding: '10px 20px',
+          fontSize: '16px',
+          backgroundColor: (!confirmed || loading) ? '#ccc' : '#dc3545',  // Gray when disabled, red otherwise
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: (!confirmed || loading) ? 'not-allowed' : 'pointer',
+          fontWeight: 'bold'
+        }}
+      >
+        {/* Show different text based on loading state */}
+        {loading ? 'Deleting Account...' : 'Delete My Account'}
+      </button>
+    </div>
+  );
+};
+
+// Export component as default
+export default DeleteAccount;
+
+
+

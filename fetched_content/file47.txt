@@ -1,0 +1,56 @@
+File Name: Settings.tsx
+Directory Location: frontend/src/components/Settings
+Original Path: frontend/src/components/Settings/Settings.tsx
+
+// Settings component: Main settings page that combines all settings subcomponents
+// This page is protected (requires login) and allows users to manage their account
+
+// Import React library
+import React from 'react';
+
+// Import all settings subcomponents
+import ProfileForm from './ProfileForm';         // Component for updating username and email
+import PasswordForm from './PasswordForm';       // Component for changing password
+import ProfilePicture from './ProfilePicture';   // Component for uploading profile picture
+import DeleteAccount from './DeleteAccount';     // Component for deleting account
+
+// Settings functional component
+const Settings: React.FC = () => {
+  return (
+    // Main container with max width and centered
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px 15px' }}>
+      {/* Page title */}
+      <h2>Account Settings</h2>
+
+      {/* Horizontal line separator */}
+      <hr style={{ margin: '20px 0', border: '1px solid #ddd' }} />
+
+      {/* Profile Form Section - Update username and email */}
+      <ProfileForm />
+
+      {/* Horizontal line separator */}
+      <hr style={{ margin: '20px 0', border: '1px solid #ddd' }} />
+
+      {/* Password Form Section - Change password */}
+      <PasswordForm />
+
+      {/* Horizontal line separator */}
+      <hr style={{ margin: '20px 0', border: '1px solid #ddd' }} />
+
+      {/* Profile Picture Section - Upload/change profile picture */}
+      <ProfilePicture />
+
+      {/* Horizontal line separator */}
+      <hr style={{ margin: '20px 0', border: '1px solid #ddd' }} />
+
+      {/* Delete Account Section - Permanently delete account */}
+      <DeleteAccount />
+    </div>
+  );
+};
+
+// Export component as default
+export default Settings;
+
+
+

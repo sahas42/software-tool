@@ -1,0 +1,194 @@
+File Name: ProfileForm.tsx
+Directory Location: frontend/src/components/Settings
+Original Path: frontend/src/components/Settings/ProfileForm.tsx
+
+// ProfileForm component: Allows users to update their username and email
+// This form displays current values and submits changes to the backend
+
+// Import React and useState hook for managing component state
+import React, { useState } from 'react';
+
+// Import useAuth hook to access current user data and update function
+import { useAuth } from '../../contexts/AuthContext';
+
+// ProfileForm functional component
+const ProfileForm: React.FC = () => {
+  // Get user data and updateUser function from AuthContext
+  // user! means we assert user is not null (this component only renders when logged in)
+  const { user, updateUser } = useAuth();
+
+  // State for form inputs - initialized with current user data
+  // user! non-null assertion is safe because ProfileForm only renders when user is logged in
+  const [username, setUsername] = useState(user!.username);
+  const [email, setEmail] = useState(user!.email);
+
+  // State for success and error messages
+  const [success, setSuccess] = useState('');  // Success message to display
+  const [error, setError] = useState('');      // Error message to display
+
+  // State for loading (true while update request is in progress)
+  const [loading, setLoading] = useState(false);
+
+  // Base URL for API requests
+  const API_URL = 'http://localhost:3001';
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default form submission (which would reload the page)
+    e.preventDefault();
+
+    // Clear previous messages
+    setSuccess('');
+    setError('');
+
+    // Client-side validation: ensure fields are not empty
+    if (!username.trim() || !email.trim()) {
+      setError('Username and email cannot be empty');
+      return;
+    }
+
+    // Set loading state to true (disables submit button, shows loading text)
+    setLoading(true);
+
+    try {
+      // Make PUT request to update profile
+      const response = await fetch(`${API_URL}/api/user/profile`, {
+        method: 'PUT',                        // PUT method for updating resources
+        headers: {
+          'Content-Type': 'application/json', // Sending JSON data
+        },
+        credentials: 'include',               // Include session cookie for authentication
+        body: JSON.stringify({                // Convert data to JSON string
+          username: username.trim(),          // Send trimmed username
+          email: email.trim()                 // Send trimmed email
+        }),
+      });
+
+      // If response is not OK (400/401/500), throw error
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Backend sends either 'error' (single message) or 'errors' (array of messages)
+        throw new Error(errorData.error || errorData.errors?.join(', ') || 'Failed to update profile');
+      }
+
+      // Parse successful response
+      const data = await response.json();
+
+      // Update user state in AuthContext with new data
+      // This updates the user throughout the app without re-fetching
+      updateUser(data.user);
+
+      // Show success message
+      setSuccess('Profile updated successfully!');
+    } catch (err) {
+      // If request fails, show error message
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      // Whether success or failure, stop loading state
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: '30px' }}>
+      {/* Section title */}
+      <h3>Update Profile</h3>
+
+      {/* Display success message if profile was updated */}
+      {success && (
+        <div style={{
+          color: 'green',
+          backgroundColor: '#d4edda',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {success}
+        </div>
+      )}
+
+      {/* Display error message if update failed */}
+      {error && (
+        <div style={{
+          color: 'red',
+          backgroundColor: '#ffebee',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {/* Username input field */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="username" style={{ display: 'block', marginBottom: '5px' }}>
+            Username:
+          </label>
+          <input
+            type="text"
+            id="username"
+            value={username}                           // Controlled input - value from state
+            onChange={(e) => setUsername(e.target.value)} // Update state on change
+            disabled={loading}                          // Disable input while loading
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Email input field */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>
+            Email:
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}                              // Controlled input - value from state
+            onChange={(e) => setEmail(e.target.value)} // Update state on change
+            disabled={loading}                          // Disable input while loading
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={loading}  // Disable button while loading to prevent duplicate submissions
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            backgroundColor: loading ? '#ccc' : '#007bff',  // Gray when loading, blue otherwise
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer'     // Change cursor to show disabled state
+          }}
+        >
+          {/* Show different text based on loading state */}
+          {loading ? 'Updating...' : 'Update Profile'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// Export component as default
+export default ProfileForm;
+
+
+

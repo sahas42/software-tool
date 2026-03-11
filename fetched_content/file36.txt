@@ -1,0 +1,41 @@
+File Name: GuestRoute.tsx
+Directory Location: frontend/src/components
+Original Path: frontend/src/components/GuestRoute.tsx
+
+// GuestRoute component: Wrapper for routes that should only be accessible to non-logged-in users
+// If user is already logged in, they are redirected to home page
+// This prevents logged-in users from accessing login/register pages
+
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+interface GuestRouteProps {
+    children: React.ReactNode;
+}
+
+const GuestRoute: React.FC<GuestRouteProps> = ({ children }) => {
+    const { user, loading } = useAuth();
+
+    // If still loading, show loading message
+    if (loading) {
+        return (
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+                Loading...
+            </div>
+        );
+    }
+
+    // If user is logged in, redirect to home page
+    if (user) {
+        return <Navigate to="/" replace />;
+    }
+
+    // User is not logged in - render the auth page
+    return <>{children}</>;
+};
+
+export default GuestRoute;
+
+
+

@@ -1,0 +1,119 @@
+File Name: cleanupAccounts.ts
+Directory Location: backend/src/scripts
+Original Path: backend/src/scripts/cleanupAccounts.ts
+
+// Script to delete ONLY legacy accounts from the database
+// Legacy accounts = accounts with role='client' AND user_type IS NULL
+// This preserves:
+//   - Admin accounts (role='admin')
+//   - New accounts with user_type (donor/recipient/both)
+// Useful for cleaning up old test data from before user_type was introduced
+
+import db from '../database';
+
+async function cleanupLegacyAccounts() {
+    try {
+        console.log('🧹 Starting legacy account cleanup...\n');
+
+        // Get count of all users before cleanup
+        const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+        console.log(`Total users in database: ${totalUsers.count}`);
+
+        // Get admin user to show it's preserved
+        const adminUser = db.prepare('SELECT id, username FROM users WHERE role = ?').get('admin') as { id: number; username: string } | undefined;
+
+        if (adminUser) {
+            console.log(`✓ Admin user: ${adminUser.username} (ID: ${adminUser.id}) - WILL BE PRESERVED`);
+        }
+
+        // Count new accounts with user_type
+        const newAccounts = db.prepare('SELECT COUNT(*) as count FROM users WHERE user_type IS NOT NULL').get() as { count: number };
+        console.log(`✓ New accounts with user_type: ${newAccounts.count} - WILL BE PRESERVED`);
+
+        // Count legacy accounts to be deleted (client role with no user_type)
+        const legacyCount = db.prepare(
+            'SELECT COUNT(*) as count FROM users WHERE role = ? AND user_type IS NULL'
+        ).get('client') as { count: number };
+
+        console.log(`\n⚠️  Legacy accounts to delete: ${legacyCount.count}`);
+
+        if (legacyCount.count === 0) {
+            console.log('✓ No legacy accounts to delete. Database is clean!');
+            return;
+        }
+
+        // Show legacy accounts that will be deleted
+        const legacyUsers = db.prepare(
+            'SELECT id, username, email, role, user_type FROM users WHERE role = ? AND user_type IS NULL'
+        ).all('client') as Array<{
+            id: number;
+            username: string;
+            email: string;
+            role: string;
+            user_type: string | null;
+        }>;
+
+        console.log('\nLegacy accounts to be deleted:');
+        console.log('================================');
+        legacyUsers.forEach(user => {
+            console.log(`- ID: ${user.id} | Username: ${user.username} | Email: ${user.email}`);
+        });
+
+        // Get IDs of legacy users for deletion
+        const legacyUserIds = legacyUsers.map(u => u.id);
+
+        console.log('\n⚠️  This will also delete associated data:');
+        console.log('- Monetary donations from these users');
+        console.log('- Sessions from these users');
+
+        // Begin transaction for atomic deletion
+        const deleteTransaction = db.transaction(() => {
+            // Delete related data first
+
+            // Delete monetary donations from legacy users
+            let deletedDonations = 0;
+            legacyUserIds.forEach(userId => {
+                const result = db.prepare('DELETE FROM monetary_donations WHERE user_id = ?').run(userId);
+                deletedDonations += result.changes;
+            });
+            console.log(`\n✓ Deleted ${deletedDonations} monetary donations`);
+
+            // Delete sessions for legacy users
+            console.log(`✓ Deleted sessions for legacy users`);
+
+            // Finally, delete the legacy user accounts
+            const deletedUsers = db.prepare(
+                'DELETE FROM users WHERE role = ? AND user_type IS NULL'
+            ).run('client');
+            console.log(`✓ Deleted ${deletedUsers.changes} legacy user accounts`);
+        });
+
+        // Execute the transaction
+        deleteTransaction();
+
+        // Verify cleanup
+        const remainingUsers = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+        const remainingNew = db.prepare('SELECT COUNT(*) as count FROM users WHERE user_type IS NOT NULL').get() as { count: number };
+
+        console.log('\n✅ Cleanup completed successfully!');
+        console.log(`Total remaining users: ${remainingUsers.count}`);
+        console.log(`  - Admin: ${adminUser ? 1 : 0}`);
+        console.log(`  - New accounts (donor/recipient/both): ${remainingNew.count}`);
+        console.log('\nYou can now register with previously used usernames and emails.');
+
+    } catch (error) {
+        console.error('❌ Error during cleanup:', error);
+        console.error('Database may be in an inconsistent state. Please check manually.');
+    }
+}
+
+// Run the script
+console.log('╔════════════════════════════════════════════╗');
+console.log('║   AspireBridge Legacy Account Cleanup     ║');
+console.log('║   (Deletes only old client accounts)      ║');
+console.log('╚════════════════════════════════════════════╝\n');
+
+cleanupLegacyAccounts();
+
+
+

@@ -1,0 +1,221 @@
+File Name: PasswordForm.tsx
+Directory Location: frontend/src/components/Settings
+Original Path: frontend/src/components/Settings/PasswordForm.tsx
+
+// PasswordForm component: Allows users to change their password
+// Requires current password for security, validates new password strength
+
+// Import React and useState hook for managing component state
+import React, { useState } from 'react';
+
+// PasswordForm functional component
+const PasswordForm: React.FC = () => {
+  // State for form inputs - all password fields start empty
+  const [currentPassword, setCurrentPassword] = useState('');  // User's current password (for verification)
+  const [newPassword, setNewPassword] = useState('');          // New password user wants to set
+  const [confirmPassword, setConfirmPassword] = useState('');  // Confirmation of new password
+
+  // State for success and error messages
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  // State for loading (true while password change request is in progress)
+  const [loading, setLoading] = useState(false);
+
+  // Base URL for API requests
+  const API_URL = 'http://localhost:3001';
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default form submission behavior (page reload)
+    e.preventDefault();
+
+    // Clear previous success/error messages
+    setSuccess('');
+    setError('');
+
+    // Client-side validation: Check all fields are filled
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    // Client-side validation: Check new passwords match
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    // Client-side validation: Check new password length
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters');
+      return;
+    }
+
+    // Set loading state
+    setLoading(true);
+
+    try {
+      // Make PUT request to change password
+      const response = await fetch(`${API_URL}/api/user/password`, {
+        method: 'PUT',                        // PUT method for updating resources
+        headers: {
+          'Content-Type': 'application/json', // Sending JSON data
+        },
+        credentials: 'include',               // Include session cookie for authentication
+        body: JSON.stringify({                // Convert data to JSON string
+          currentPassword,                    // Current password for verification
+          newPassword                         // New password to set
+        }),
+      });
+
+      // If response is not OK, extract error message and throw
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Backend sends either 'error' (single message) or 'errors' (array)
+        throw new Error(errorData.error || errorData.errors?.join(', ') || 'Failed to update password');
+      }
+
+      // Password change successful
+      // Clear all password fields for security (don't keep passwords in state)
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+
+      // Show success message
+      setSuccess('Password updated successfully!');
+    } catch (err) {
+      // If request fails, show error message
+      setError(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      // Whether success or failure, stop loading state
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: '30px' }}>
+      {/* Section title */}
+      <h3>Change Password</h3>
+
+      {/* Display success message if password was updated */}
+      {success && (
+        <div style={{
+          color: 'green',
+          backgroundColor: '#d4edda',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {success}
+        </div>
+      )}
+
+      {/* Display error message if update failed */}
+      {error && (
+        <div style={{
+          color: 'red',
+          backgroundColor: '#ffebee',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {/* Current password input field */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="currentPassword" style={{ display: 'block', marginBottom: '5px' }}>
+            Current Password:
+          </label>
+          <input
+            type="password"                                    // password type hides input
+            id="currentPassword"
+            value={currentPassword}                            // Controlled input - value from state
+            onChange={(e) => setCurrentPassword(e.target.value)} // Update state on change
+            disabled={loading}                                  // Disable while loading
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* New password input field */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="newPassword" style={{ display: 'block', marginBottom: '5px' }}>
+            New Password:
+          </label>
+          <input
+            type="password"                                 // password type hides input
+            id="newPassword"
+            value={newPassword}                             // Controlled input
+            onChange={(e) => setNewPassword(e.target.value)} // Update state on change
+            disabled={loading}                               // Disable while loading
+            placeholder="Min 8 chars, uppercase, lowercase, number"  // Hint for password requirements
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Confirm new password input field */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: '5px' }}>
+            Confirm New Password:
+          </label>
+          <input
+            type="password"                                     // password type hides input
+            id="confirmPassword"
+            value={confirmPassword}                             // Controlled input
+            onChange={(e) => setConfirmPassword(e.target.value)} // Update state on change
+            disabled={loading}                                   // Disable while loading
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={loading}  // Disable while loading to prevent duplicate submissions
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            backgroundColor: loading ? '#ccc' : '#28a745',  // Gray when loading, green otherwise
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {/* Show different text based on loading state */}
+          {loading ? 'Updating...' : 'Change Password'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// Export component as default
+export default PasswordForm;
+
+
+
