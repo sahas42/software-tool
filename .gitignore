@@ -2,3 +2,5 @@
 .venv/
 **/__pycache__/
 .env
+fetched_content.txt
+fetched_content/
