@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compliance Checker — AI-Powered Dataset Audit</title>
+  <meta name="description"
+    content="Upload your dataset rules and audit your codebase — via GitHub, ZIP, files, or folder — using Gemini AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- ===== BACKGROUND LAYER (non-interactive) ===== -->
+  <div class="bg-layer" aria-hidden="true">
+    <!-- Gradient orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Floating bouncing icons: lock, search, tick, wrong (X), file — positions by bouncing-icons.js -->
+    <!-- 1. Lock -->
+    <div class="float-icon icon-lock icon-lg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+        stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    </div>
+    <!-- 2. Search -->
+    <div class="float-icon icon-search icon-md">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </div>
+    <!-- 3. Tick / Checkmark -->
+    <div class="float-icon icon-tick icon-lg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    </div>
+    <!-- 4. Wrong / X -->
+    <div class="float-icon icon-wrong icon-md">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    </div>
+    <!-- 5. File / Document -->
+    <div class="float-icon icon-file icon-lg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <span class="logo-text">Compliance<strong>AI</strong></span>
+      </div>
+      <div class="header-badge">Powered by Gemini 2.5 Flash</div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-label">AI-Powered Audit Tool</div>
+      <h1 class="hero-title">Dataset <span class="gradient-text">Compliance</span> Checker</h1>
+      <p class="hero-subtitle">Upload your dataset rules and audit any codebase — from GitHub, a ZIP archive, individual
+        files, or an entire folder.</p>
+    </section>
+
+    <!-- Form card -->
+    <section class="checker-card" id="checker">
+      <form id="audit-form" novalidate>
+
+        <!-- Step 01: Rules -->
+        <div class="form-step">
+          <div class="step-number">01</div>
+          <div class="step-content">
+            <h2 class="step-title">Dataset Rules File</h2>
+            <p class="step-desc">Upload a <code>.yaml</code> or <code>.pdf</code> file defining allowed and barred
+              dataset uses.</p>
+            <div class="file-drop-zone" id="rules-drop-zone">
+              <input type="file" id="rules-file" name="rules_file" accept=".yaml,.yml,.pdf" hidden />
+              <div class="drop-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <div class="drop-text">
+                <span class="drop-primary">Drop rules file here</span>
+                <span class="drop-secondary">or <button type="button" class="drop-browse"
+                    id="rules-browse-btn">browse</button></span>
+                <span class="drop-hint">Supports .yaml · .yml · .pdf</span>
+              </div>
+            </div>
+            <div class="file-selected" id="rules-file-selected" style="display:none;">
+              <div class="file-chip">
+                <span class="file-chip-icon">📄</span>
+                <span class="file-chip-name" id="rules-chip-name"></span>
+                <button type="button" class="file-chip-remove" id="rules-file-remove">✕</button>
+              </div>
+            </div>
+            <div class="field-error" id="rules-error"></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Step 02: Codebase source (tabbed) -->
+        <div class="form-step">
+          <div class="step-number">02</div>
+          <div class="step-content">
+            <h2 class="step-title">Codebase Source</h2>
+            <p class="step-desc">Choose how to provide the codebase to audit.</p>
+
+            <!-- Source tabs -->
+            <div class="source-tabs" role="tablist">
+              <button type="button" class="src-tab active" data-tab="github" role="tab" id="tab-github">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+                </svg>
+                GitHub URL
+              </button>
+              <button type="button" class="src-tab" data-tab="zip" role="tab" id="tab-zip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                ZIP Archive
+              </button>
+              <button type="button" class="src-tab" data-tab="files" role="tab" id="tab-files">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                Files
+              </button>
+              <button type="button" class="src-tab" data-tab="folder" role="tab" id="tab-folder">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+                Folder
+              </button>
+            </div>
+
+            <!-- Tab panels -->
+            <!-- GitHub -->
+            <div class="tab-panel active" id="panel-github">
+              <div class="input-group">
+                <div class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+                  </svg>
+                </div>
+                <input type="url" id="codebase-url" name="codebase_url" class="text-input"
+                  placeholder="https://github.com/owner/repository" autocomplete="off" />
+              </div>
+              <div class="field-error" id="url-error"></div>
+            </div>
+
+            <!-- ZIP -->
+            <div class="tab-panel" id="panel-zip">
+              <div class="file-drop-zone" id="zip-drop-zone">
+                <input type="file" id="codebase-zip" name="codebase_zip" accept=".zip" hidden />
+                <div class="drop-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </div>
+                <div class="drop-text">
+                  <span class="drop-primary">Drop your ZIP archive here</span>
+                  <span class="drop-secondary">or <button type="button" class="drop-browse"
+                      id="zip-browse-btn">browse</button></span>
+                  <span class="drop-hint">Supports .zip</span>
+                </div>
+              </div>
+              <div class="file-selected" id="zip-file-selected" style="display:none;">
+                <div class="file-chip">
+                  <span class="file-chip-icon">🗜️</span>
+                  <span class="file-chip-name" id="zip-chip-name"></span>
+                  <button type="button" class="file-chip-remove" id="zip-file-remove">✕</button>
+                </div>
+              </div>
+              <div class="field-error" id="zip-error"></div>
+            </div>
+
+            <!-- Files -->
+            <div class="tab-panel" id="panel-files">
+              <div class="file-drop-zone multi" id="files-drop-zone">
+                <input type="file" id="codebase-files" name="codebase_files" multiple
+                  accept=".py,.js,.ts,.java,.cpp,.c,.go,.rb,.rs,.cs,.php,.swift,.kt" hidden />
+                <div class="drop-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                    <polyline points="13 2 13 9 20 9" />
+                  </svg>
+                </div>
+                <div class="drop-text">
+                  <span class="drop-primary">Drop source files here</span>
+                  <span class="drop-secondary">or <button type="button" class="drop-browse" id="files-browse-btn">browse
+                      files</button></span>
+                  <span class="drop-hint">.py · .js · .ts · .java · .go · and more</span>
+                </div>
+              </div>
+              <div class="multi-files-list" id="files-list" style="display:none;"></div>
+              <div class="field-error" id="files-error"></div>
+            </div>
+
+            <!-- Folder -->
+            <div class="tab-panel" id="panel-folder">
+              <div class="file-drop-zone" id="folder-drop-zone">
+                <input type="file" id="codebase-folder" name="codebase_files" webkitdirectory multiple hidden />
+                <div class="drop-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                <div class="drop-text">
+                  <span class="drop-primary">Select an entire folder</span>
+                  <span class="drop-secondary"><button type="button" class="drop-browse" id="folder-browse-btn">browse
+                      folder</button></span>
+                  <span class="drop-hint">All source files inside will be scanned</span>
+                </div>
+              </div>
+              <div class="multi-files-list" id="folder-list" style="display:none;"></div>
+              <div class="field-error" id="folder-error"></div>
+            </div>
+
+            <div class="field-error" id="codebase-error"></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Step 03: API key -->
+        <div class="form-step">
+          <div class="step-number">03</div>
+          <div class="step-content">
+            <h2 class="step-title">Gemini API Key</h2>
+            <p class="step-desc">Used only for this request — never stored. Or set <code>GEMINI_API_KEY</code> on the
+              server.</p>
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <input type="password" id="api-key" name="api_key" class="text-input" placeholder="AIza..."
+                autocomplete="off" />
+              <button type="button" class="toggle-password" id="toggle-key" title="Show/hide key">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+            <div class="field-error" id="key-error"></div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="form-actions">
+          <button type="submit" class="submit-btn" id="submit-btn">
+            <span class="submit-btn-text">Run Compliance Audit</span>
+            <span class="submit-btn-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </span>
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- Loading -->
+    <section class="loading-section" id="loading-section" style="display:none;">
+      <div class="loading-card">
+        <div class="scanner-animation">
+          <div class="scanner-rings">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+          </div>
+          <div class="scanner-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+        </div>
+        <h3 class="loading-title">Analyzing Codebase...</h3>
+        <div class="loading-steps">
+          <div class="loading-step active" id="lStep1">
+            <div class="ls-dot"></div><span>Loading codebase</span>
+          </div>
+          <div class="loading-step" id="lStep2">
+            <div class="ls-dot"></div><span>Parsing dataset usage rules</span>
+          </div>
+          <div class="loading-step" id="lStep3">
+            <div class="ls-dot"></div><span>Running Gemini AI analysis</span>
+          </div>
+          <div class="loading-step" id="lStep4">
+            <div class="ls-dot"></div><span>Generating compliance report</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Report -->
+    <section class="report-section" id="report-section" style="display:none;">
+      <div class="report-header">
+        <div class="report-title-row">
+          <h2 class="report-title">Compliance Report</h2>
+          <div class="report-actions">
+            <button class="action-btn" id="download-json-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download JSON
+            </button>
+            <button class="action-btn" id="new-audit-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
+              </svg>
+              New Audit
+            </button>
+          </div>
+        </div>
+        <div class="verdict-banner" id="verdict-banner">
+          <div class="verdict-icon" id="verdict-icon"></div>
+          <div class="verdict-text">
+            <div class="verdict-label" id="verdict-label"></div>
+            <div class="verdict-sub" id="verdict-sub"></div>
+          </div>
+        </div>
+        <div class="stats-row" id="stats-row"></div>
+      </div>
+      <div class="report-summary-block" id="report-summary-block"></div>
+      <div class="violations-container" id="violations-container"></div>
+    </section>
+
+    <!-- Error -->
+    <div class="global-error" id="global-error" style="display:none;">
+      <div class="error-icon">⚠️</div>
+      <div class="error-text" id="error-text"></div>
+      <button class="retry-btn" id="retry-btn">Try Again</button>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <p>Compliance<strong>AI</strong> — AI-powered dataset compliance auditor · Gemini 2.5 Flash</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script src="bouncing-icons.js"></script>
+</body>
+
+</html>
