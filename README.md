@@ -2,6 +2,14 @@
 
 An AI-driven compliance checker designed to audit codebases and detect dataset license/usage violations. It parses a target codebase and maps it against a set of allowed and barred usage rules defined in a configuration file, utilizing the Gemini 2.5 Flash model for static analysis and reasoning.
 
+## Key Features
+
+- **Web Interface:** A user-friendly Flask-based UI for easy interaction without the command line.
+- **Versatile Code Input:** Analyze code via remote GitHub URLs, uploaded ZIP archives, multiple local file uploads, or entire directory folders.
+- **Flexible Rules Extraction:** Supply compliance rules via standard YAML configuration files, or automatically extract text directly from dataset PDF documents.
+- **Local & Remote Scanning:** Use the CLI to traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
+- **AI-Driven Analysis:** Leverages Google's Gemini 2.5 Flash model for context-aware static code analysis and precise violation detection.
+
 ## How It Works
 
 The tool orchestrates an end-to-end static audit pipeline:
@@ -88,6 +96,15 @@ You can pass a GitHub URL to the `--codebase` flag to scrape public repositories
 ```bash
 python -m compliance_checker --rules examples/rules.yaml --codebase https://github.com/sahas42/ocr
 ```
+
+### Example 3: Web Application (UI)
+A Flask-based web interface is also available for easier interaction:
+
+```bash
+python server.py
+```
+Then, open your browser and navigate to `http://localhost:5001`. You can upload rule files (YAML/PDF) and analyze local files, ZIP archives, or GitHub repositories directly from the UI.
+
 
 ### Example Output
 
