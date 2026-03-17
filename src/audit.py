@@ -1,100 +1,133 @@
 import os
-import yaml
+import io
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 
+from src.compliance_checker.models import UsageRules, Violation, ComplianceReport
 
-current_file_dir = Path(__file__).resolve().parent
-root_dir = current_file_dir.parent
-env_path = root_dir / ".env"
+def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str) -> ComplianceReport:
+    """
+    Advanced RAG Pipeline:
+    Dynamically chunks the codebase in-memory, embeds it, and runs a localized RAG query
+    for each barred rule, aggregating the results into a final structured ComplianceReport.
+    """
+    if not api_key:
+        raise ValueError("Google API Key is required for the Advanced Pipeline.")
+        
+    print(f"\n[Advanced Pipeline] Initializing...")
 
-if load_dotenv(dotenv_path=env_path):
-    print(f"---Loaded environment variables from {env_path}")
-else:
-    print(f"---Warning: Could not find .env file at {env_path}. Falling back to system variables.")
+    # 1. Parse into Langchain Documents
+    docs = []
+    if isinstance(codebase, dict):
+        for filepath, content in codebase.items():
+            docs.append(Document(page_content=content, metadata={"source": filepath}))
+    else:
+        # If codebase is a single string (like from gitingest remote fetch)
+        docs.append(Document(page_content=codebase, metadata={"source": "github_repository"}))
 
-print("Initializing local BGE embeddings...")
-embeddings = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-small-en-v1.5",
-    model_kwargs={"device": "cpu"}
-)
+    # 2. Smart Chunking (Python focused but works decently for generic text)
+    print("[Advanced Pipeline] Chunking codebase...")
+    splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.PYTHON, chunk_size=1500, chunk_overlap=150
+    )
+    texts = splitter.split_documents(docs)
+    print(f"[Advanced Pipeline] Created {len(texts)} semantic chunks.")
 
-persist_db_path = current_file_dir / "rules_parser/chroma_langchain_db"
-if not persist_db_path.exists():
-    print(f" Error: Database folder not found at {persist_db_path}. Run ingestion first!")
-    exit(1)
-
-vector_store = Chroma(
-    collection_name="source_code_collection",
-    embedding_function=embeddings,
-    persist_directory=str(persist_db_path),
-)
-
-api_key = os.getenv("GOOGLE_API_KEY")
-if not api_key:
-    print(" Error: GOOGLE_API_KEY not found in .env or system environment.")
-    exit(1)
-
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash", 
-    google_api_key=api_key,
-    temperature=0
-)
-
-def run_compliance_audit(yaml_path):
-    """Parses rules and checks the codebase for each one."""
-    if not Path(yaml_path).exists():
-        print(f" Error: YAML file not found at {yaml_path}")
-        return
-
-    with open(yaml_path, 'r') as f:
-        rules_data = yaml.safe_load(f)
-  
-    barred_rules = rules_data.get('barred_uses', [])
+    # 3. Fast In-Memory Vector Store setup
+    print("[Advanced Pipeline] Initializing local BGE embeddings and building ephemeral index...")
+    embeddings = HuggingFaceEmbeddings(
+        model_name="BAAI/bge-small-en-v1.5",
+        model_kwargs={"device": "cpu"}
+    )
     
-    print(f"\n Starting Audit: Checking {len(barred_rules)} rules against codebase...")
+    # Create an ephemeral Chroma DB explicitly (no persistent directory)
+    vector_store = Chroma.from_documents(
+        documents=texts,
+        embedding=embeddings,
+        collection_name="ephemeral_source_code"
+    )
+
+    # 4. Initialize LLM (Requesting JSON output matching our schema)
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash", 
+        google_api_key=api_key,
+        temperature=0
+    )
+    
+    # Force the model to output a strictly formatted JSON array of Violations
+    structured_llm = llm.with_structured_output(list[Violation])
+
+    all_violations = []
+    barred_rules = rules.barred_uses
+    
+    print(f"\n[Advanced Pipeline] Starting Audit: Checking {len(barred_rules)} barred rules...")
     print("-" * 60)
 
+    # 5. Iterative Agentic RAG Audit
     for i, rule in enumerate(barred_rules, 1):
         print(f"Checking Rule #{i}: {rule[:60]}...")
-        docs = vector_store.similarity_search(rule, k=4)
+        
+        # Retrieve Top K suspicious chunks
+        retrieved_docs = vector_store.similarity_search(rule, k=4)
+        
+        if not retrieved_docs:
+            continue
+            
         context_list = []
-        for d in docs:
+        for d in retrieved_docs:
             src = d.metadata.get('source', 'Unknown File')
-            context_list.append(f"[File: {Path(src).name}]\n{d.page_content}")
+            context_list.append(f"--- FILE: {src} ---\n{d.page_content}")
         
         code_context = "\n\n".join(context_list)
 
         prompt = f"""
-        SYSTEM: You are a Senior Software Compliance Auditor.
-        TASK: Compare the RULE below against the PROVIDED CODE SNIPPETS.
-
-        RULE: "{rule}"
-
+        SYSTEM: You are a Senior Software Compliance Auditor analyzing code snippets retrieved via a vector search.
+        
+        TASK: Compare the specific barred RULE below against the PROVIDED CODE SNIPPETS to definitively determine if the rule is violated.
+        
+        BARRED RULE: "{rule}"
+        
         CODE SNIPPETS:
         {code_context}
 
         INSTRUCTIONS:
-        1. If the code clearly violates the rule, result is VIOLATION.
-        2. If the code is relevant but follows the rule, result is PASS.
-        3. If the code has nothing to do with this rule topic, result is NEUTRAL.
-
-        FORMAT:
-        RESULT: [STATUS]
-        REASON: (Brief explanation)
+        - If the code clearly violates the rule, extract the exact details into the violation schema.
+        - If the code is relevant but does NOT violate the rule, OR if the code is completely irrelevant to the rule, return an EMPTY LIST [].
+        - Severity must be one of: "high", "medium", "low".
+        - Ensure "code_snippet" is brief but specific.
         """
 
         try:
-            response = llm.invoke(prompt)
-            print(f"\n{response.content}")
+            # The structured output guarantees returning a list of Violations or an empty list
+            violations = structured_llm.invoke(prompt)
+            if violations:
+                print(f"  -> Found {len(violations)} violation(s)!")
+                all_violations.extend(violations)
+            else:
+                print("  -> Passed. No violations.")
         except Exception as e:
-            print(f"---API Error on Rule #{i}: {e}")
+            print(f"--- API Error on Rule #{i}: {e}")
             
-        print("-" * 60)
+    print("-" * 60)
+    
+    # 6. Generate Summary and compile Report
+    is_compliant = len(all_violations) == 0
+    if is_compliant:
+        summary = "Advanced RAG analysis passed. No specific dataset usage rules were found to be violated in the retrieved code chunks."
+    else:
+        summary = f"Advanced Agentic RAG detected {len(all_violations)} potential rule violation(s) across the codebase."
+
+    return ComplianceReport(
+        violations=all_violations,
+        summary=summary,
+        is_compliant=is_compliant
+    )
 
 if __name__ == "__main__":
-    rules_yaml_path = root_dir / "examples/rules.yaml" 
-    run_compliance_audit(rules_yaml_path)
+    print("This module is now designed to be called programmatically via `analyze_advanced()`.")

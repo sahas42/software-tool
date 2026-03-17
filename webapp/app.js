@@ -360,6 +360,13 @@ form.addEventListener('submit', async (e) => {
   formData.append('api_key', apiKeyInput.value.trim());
   formData.append('codebase_type', activeTab);
 
+  const pipelineRadios = document.getElementsByName('pipeline_type');
+  let selectedPipeline = 'vanilla';
+  for (const r of pipelineRadios) {
+    if (r.checked) selectedPipeline = r.value;
+  }
+  formData.append('pipeline_type', selectedPipeline);
+
   if (activeTab === 'github') {
     formData.append('codebase_url', cobaseUrl.value.trim());
   } else if (activeTab === 'zip') {
