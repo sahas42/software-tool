@@ -70,6 +70,9 @@ python -m venv .venv
 
 # 3. Install the package in editable mode with dependencies
 pip install -e ".[dev]"
+
+# 4. Install dependencies required for the Web UI (Flask, etc.)
+pip install -r requirements.txt
 ```
 
 ## Usage
