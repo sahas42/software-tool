@@ -114,6 +114,9 @@ def _build_user_prompt(rules: UsageRules, codebase: dict[str, str] | str) -> str
             parts.append(
                 f"Included {len(relevant_txt)} relevant .txt file(s) and excluded irrelevant .txt files."
             )
+            parts.append("\n## Included .txt Files:")
+            for path in sorted(relevant_txt.keys()):
+                parts.append(f"- {path}")
         else:
             parts.append("\n## Note: No .txt files were included because none were relevant to the rules query.")
     else:
