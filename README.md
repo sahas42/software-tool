@@ -51,6 +51,9 @@ For this initial Minimal Viable Product roll-out, we made a few deliberate trade
 2. **AI Provider:** We are hardcoded to use the Google GenAI SDK and specifically target the `gemini-2.5-flash` model. We also assume the usage of the free tier API which imposes rate ceilings. To mitigate 429 errors, `analyzer.py` utilizes exponential backoff to handle rate limits gracefully.
 3. **Remote Parsing:** The integration of `gitingest` natively pulls `.gitignore` respected code. Ensure private repositories provide a `GITHUB_TOKEN` to gitingest via environment variables if used.
 
+> [!NOTE] 
+> **Current State of Development:** Currently, the Web UI and CLI (`analyzer.py`) run entirely on the "Vanilla" Gemini pipeline (processing the codebase in a single context window pass). The advanced Agentic RAG logic is isolated in a separate script (`src/audit.py`) and is not yet integrated into the GUI or main CLI loop. It operates as a distinct standalone pipeline at the moment.
+
 ## Setup & Installation
 
 You should install this tool inside an isolated Python virtual environment.
@@ -68,10 +71,11 @@ python -m venv .venv
 # On macOS/Linux:
 # source .venv/bin/activate
 
-# 3. Install the package in editable mode with dependencies
+# 3. Install the dependencies
+# Option A (Recommended): Install the package itself in editable mode along with all dev/frontend dependencies via pyproject.toml
 pip install -e ".[dev]"
 
-# 4. Install dependencies required for the Web UI (Flask, etc.)
+# Option B: Alternatively, if you just want to install the required packages without installing the compliance checker as a module
 pip install -r requirements.txt
 ```
 
@@ -135,6 +139,6 @@ Summary: The project breaks multiple rules including redistribution of raw data.
 
 ## Future Roadmap
 
-- [ ] **Chunking & Indexing:** Introduce an AST parser and RAG-based vector database (like Chroma/FAISS) to chunk large codebases dynamically instead of naive concatenation.
-
 - [ ] **IDE Integration?:** Expose the tool as a VS Code extension to block bad commits in real-time?
+
+- [ ] **Auto-Compliance Check on Push:** Automatically run the compliance check on every push to the repository.
