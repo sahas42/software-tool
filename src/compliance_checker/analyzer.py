@@ -11,6 +11,7 @@ from .models import UsageRules, ComplianceReport
 
 MAX_RETRIES = 3
 INITIAL_DELAY = 10
+MAX_RELEVANT_TXT = 5
 
 
 SYSTEM_PROMPT = """\
@@ -72,9 +73,9 @@ def _filter_relevant_txt_files(codebase: dict[str, str], rules: UsageRules) -> d
     for score, filepath, content in txt_scores:
         if score > 0:
             keep[filepath] = content
-    # Keep up to 5 top .txt files if none scored positively (fallback)
+    # Keep up to MAX_RELEVANT_TXT top .txt files if none scored positively (fallback)
     if not keep:
-        for score, filepath, content in txt_scores[:5]:
+        for score, filepath, content in txt_scores[:MAX_RELEVANT_TXT]:
             keep[filepath] = content
 
     return keep
