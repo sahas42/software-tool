@@ -3,6 +3,7 @@ import io
 import json
 from pathlib import Path
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -60,8 +61,12 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
         temperature=0
     )
     
-    # Force the model to output a strictly formatted JSON array of Violations
-    structured_llm = llm.with_structured_output(list[Violation])
+    # Create a concrete Pydantic wrapper instead of passing list[Violation] directly
+    class ViolationListWrapper(BaseModel):
+        items: list[Violation]
+        
+    # Force the model to output a strictly formatted JSON structure
+    structured_llm = llm.with_structured_output(ViolationListWrapper)
 
     all_violations = []
     barred_rules = rules.barred_uses
@@ -104,11 +109,11 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
         """
 
         try:
-            # The structured output guarantees returning a list of Violations or an empty list
-            violations = structured_llm.invoke(prompt)
-            if violations:
-                print(f"  -> Found {len(violations)} violation(s)!")
-                all_violations.extend(violations)
+            # The structured output guarantees returning a wrapper containing a list of Violations
+            violation_wrapper = structured_llm.invoke(prompt)
+            if violation_wrapper and violation_wrapper.items:
+                print(f"  -> Found {len(violation_wrapper.items)} violation(s)!")
+                all_violations.extend(violation_wrapper.items)
             else:
                 print("  -> Passed. No violations.")
         except Exception as e:
