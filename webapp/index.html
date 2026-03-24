@@ -276,9 +276,32 @@
 
         <div class="divider"></div>
 
-        <!-- Step 03: API key -->
+        <!-- Step 03: Pipeline Selection -->
         <div class="form-step">
           <div class="step-number">03</div>
+          <div class="step-content">
+            <h2 class="step-title">Analysis Pipeline</h2>
+            <p class="step-desc">Select the AI audit strategy.</p>
+            <div class="pipeline-options" style="display:flex; gap: 15px; margin-top: 10px;">
+              <label class="pipeline-option" style="flex:1; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
+                <input type="radio" name="pipeline_type" value="vanilla" checked style="margin-right: 8px;">
+                <strong>Vanilla Gemini</strong>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">Injects codebase wholesale (max 1M tokens).</div>
+              </label>
+              <label class="pipeline-option" style="flex:1; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
+                <input type="radio" name="pipeline_type" value="advanced" style="margin-right: 8px;">
+                <strong>Advanced RAG</strong>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">Chunks & vectors code for high-precision targeted audit.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Step 04: API key -->
+        <div class="form-step">
+          <div class="step-number">04</div>
           <div class="step-content">
             <h2 class="step-title">Gemini API Key</h2>
             <p class="step-desc">Used only for this request — never stored. Or set <code>GEMINI_API_KEY</code> on the

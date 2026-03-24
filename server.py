@@ -13,6 +13,7 @@ import yaml
 from src.compliance_checker.models import UsageRules, DatasetInfo
 from src.compliance_checker.codebase_loader import load_codebase
 from src.compliance_checker.analyzer import analyze
+from src.audit import analyze_advanced
 
 load_dotenv()
 
@@ -145,10 +146,14 @@ def analyze_endpoint():
         return jsonify({"error": "No source files found. Check file types / extensions."}), 422
 
     # --- Analyze ---
+    pipeline_type = request.form.get("pipeline_type", "vanilla")
     try:
-        report = analyze(rules, codebase, api_key)
+        if pipeline_type == "advanced":
+            report = analyze_advanced(rules, codebase, api_key)
+        else:
+            report = analyze(rules, codebase, api_key)
     except Exception as e:
-        return jsonify({"error": f"Gemini API analysis failed: {e}"}), 500
+        return jsonify({"error": f"Analysis failed: {e}"}), 500
 
     return jsonify(report.model_dump()), 200
 
