@@ -3,3 +3,4 @@
 .env
 venv/
 fetched_content/
+plan/

@@ -12,15 +12,37 @@ from langchain_core.documents import Document
 
 from src.compliance_checker.models import UsageRules, Violation, ComplianceReport
 
-def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str) -> ComplianceReport:
+# Available embedding models for the Advanced RAG pipeline.
+# Keys are the UI-facing identifiers sent from the frontend.
+EMBEDDING_MODELS = {
+    "jina": {
+        "model_name": "jinaai/jina-embeddings-v2-base-code",
+        "model_kwargs": {"device": "cpu"},
+        "label": "Jina Embeddings v2 Base Code",
+    },
+    "bge": {
+        "model_name": "BAAI/bge-small-en-v1.5",
+        "model_kwargs": {"device": "cpu"},
+        "label": "BGE-small-en-v1.5",
+    },
+}
+
+def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str, embed_model: str = "jina") -> ComplianceReport:
     """
     Advanced RAG Pipeline:
     Dynamically chunks the codebase in-memory, embeds it, and runs a localized RAG query
     for each barred rule, aggregating the results into a final structured ComplianceReport.
+
+    Args:
+        embed_model: Key from EMBEDDING_MODELS dict. Defaults to "jina"
+                     (jinaai/jina-embeddings-v2-base-code).
     """
     if not api_key:
         raise ValueError("Google API Key is required for the Advanced Pipeline.")
-        
+
+    # Resolve embedding config — fall back to jina if an unknown key is supplied
+    embed_cfg = EMBEDDING_MODELS.get(embed_model, EMBEDDING_MODELS["jina"])
+
     print(f"\n[Advanced Pipeline] Initializing...")
 
     # 1. Parse into Langchain Documents
@@ -41,17 +63,19 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
     print(f"[Advanced Pipeline] Created {len(texts)} semantic chunks.")
 
     # 3. Fast In-Memory Vector Store setup
-    print("[Advanced Pipeline] Initializing local BGE embeddings and building ephemeral index...")
+    print(f"[Advanced Pipeline] Loading embedding model: {embed_cfg['label']}...")
     embeddings = HuggingFaceEmbeddings(
-        model_name="BAAI/bge-small-en-v1.5",
-        model_kwargs={"device": "cpu"}
+        model_name=embed_cfg["model_name"],
+        model_kwargs=embed_cfg["model_kwargs"],
     )
     
-    # Create an ephemeral Chroma DB explicitly (no persistent directory)
+    # Create an ephemeral Chroma DB explicitly (no persistent directory).
+    # Collection name is scoped to the embed_model key so Jina (768-dim) and
+    # BGE (384-dim) never share a collection and cause a dimension mismatch.
     vector_store = Chroma.from_documents(
         documents=texts,
         embedding=embeddings,
-        collection_name="ephemeral_source_code"
+        collection_name=f"ephemeral_source_code_{embed_model}"
     )
 
     # 4. Initialize LLM (Requesting JSON output matching our schema)

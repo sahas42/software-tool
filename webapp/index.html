@@ -291,8 +291,25 @@
               <label class="pipeline-option" style="flex:1; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
                 <input type="radio" name="pipeline_type" value="advanced" style="margin-right: 8px;">
                 <strong>Advanced RAG</strong>
-                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">Chunks & vectors code for high-precision targeted audit.</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">Chunks &amp; vectors code for high-precision targeted audit.</div>
               </label>
+            </div>
+
+            <!-- Embedding model selector: only visible when Advanced RAG is chosen -->
+            <div id="embed-model-options" style="display:none; margin-top: 18px;">
+              <p class="step-desc" style="margin-bottom: 10px;">Embedding model for vectorizing the codebase:</p>
+              <div class="pipeline-options" style="display:flex; gap: 15px;">
+                <label class="pipeline-option" style="flex:1; padding: 12px 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
+                  <input type="radio" name="embed_model" value="jina" checked style="margin-right: 8px;">
+                  <strong>Jina Code v2 <span style="font-size:11px; font-weight:500; opacity:0.6;">(Default)</span></strong>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">jina-embeddings-v2-base-code · 8K context · code-aware NL↔code retrieval</div>
+                </label>
+                <label class="pipeline-option" style="flex:1; padding: 12px 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
+                  <input type="radio" name="embed_model" value="bge" style="margin-right: 8px;">
+                  <strong>BGE-small</strong>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">bge-small-en-v1.5 · 512 token limit · lightweight fallback</div>
+                </label>
+              </div>
             </div>
           </div>
         </div>

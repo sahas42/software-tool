@@ -147,9 +147,10 @@ def analyze_endpoint():
 
     # --- Analyze ---
     pipeline_type = request.form.get("pipeline_type", "vanilla")
+    embed_model = request.form.get("embed_model", "jina")
     try:
         if pipeline_type == "advanced":
-            report = analyze_advanced(rules, codebase, api_key)
+            report = analyze_advanced(rules, codebase, api_key, embed_model=embed_model)
         else:
             report = analyze(rules, codebase, api_key)
     except Exception as e:

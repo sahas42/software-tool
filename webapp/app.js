@@ -76,6 +76,24 @@ srcTabs.forEach(tab => {
   });
 });
 
+// ===================== PIPELINE + EMBED MODEL =====================
+const embedModelOptions = $('embed-model-options');
+
+function updateEmbedVisibility() {
+  const pipelineRadios = document.getElementsByName('pipeline_type');
+  let selectedPipeline = 'vanilla';
+  for (const r of pipelineRadios) {
+    if (r.checked) selectedPipeline = r.value;
+  }
+  embedModelOptions.style.display = selectedPipeline === 'advanced' ? 'block' : 'none';
+}
+
+// Attach listener to each pipeline radio button
+document.getElementsByName('pipeline_type').forEach(r => {
+  r.addEventListener('change', updateEmbedVisibility);
+});
+
+
 // ===================== RULES FILE =====================
 rulesBrowseBtn.addEventListener('click', () => rulesFileInput.click());
 rulesDropZone.addEventListener('click', (e) => { if (e.target !== rulesBrowseBtn) rulesFileInput.click(); });
@@ -366,6 +384,16 @@ form.addEventListener('submit', async (e) => {
     if (r.checked) selectedPipeline = r.value;
   }
   formData.append('pipeline_type', selectedPipeline);
+
+  // Only send embed_model when Advanced RAG is active
+  if (selectedPipeline === 'advanced') {
+    const embedRadios = document.getElementsByName('embed_model');
+    let selectedEmbed = 'jina'; // default
+    for (const r of embedRadios) {
+      if (r.checked) selectedEmbed = r.value;
+    }
+    formData.append('embed_model', selectedEmbed);
+  }
 
   if (activeTab === 'github') {
     formData.append('codebase_url', cobaseUrl.value.trim());
