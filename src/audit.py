@@ -27,7 +27,30 @@ EMBEDDING_MODELS = {
     },
 }
 
-def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str, embed_model: str = "jina") -> ComplianceReport:
+def generate_hyde_snippet(rule: str, llm: ChatGoogleGenerativeAI) -> str:
+    """
+    Generates a mock code snippet that explicitly violates the given rule.
+    """
+    prompt = f"""
+    SYSTEM: You are an expert Software Engineer. Your task is to write a short, realistic code snippet that EXPLICITLY VIOLATES the following compliance rule.
+    DO NOT provide any explanations, markdown formatting, or comments. ONLY output the raw code snippet that breaks the rule.
+        
+    RULE: "{rule}"
+    """
+    try:
+        response = llm.invoke(prompt)
+        content = response.content.strip()
+        # Strip markdown code blocks if the LLM adds them
+        if content.startswith("```"):
+            lines = content.splitlines()
+            if len(lines) >= 2:
+                content = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+        return content.strip()
+    except Exception as e:
+        print(f"[Advanced Pipeline] HyDE Generation Error for rule '{rule[:30]}...': {e}")
+        return rule  # Fall back to the original rule if generation fails
+
+def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str, embed_model: str = "jina", use_hyde: bool = True) -> ComplianceReport:
     """
     Advanced RAG Pipeline:
     Dynamically chunks the codebase in-memory, embeds it, and runs a localized RAG query
@@ -103,7 +126,14 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
         print(f"Checking Rule #{i}: {rule[:60]}...")
         
         # Retrieve Top K suspicious chunks
-        retrieved_docs = vector_store.similarity_search(rule, k=4)
+        if use_hyde:
+            print(f"  -> Generating HyDE snippet...")
+            search_query = generate_hyde_snippet(rule, llm)
+            print(f"  -> HyDE Snippet:\n{search_query}\n")
+        else:
+            search_query = rule
+
+        retrieved_docs = vector_store.similarity_search(search_query, k=4)
         
         if not retrieved_docs:
             continue
