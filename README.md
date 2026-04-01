@@ -8,6 +8,7 @@ An AI-driven compliance checker designed to audit codebases and detect dataset l
 - **Versatile Code Input:** Analyze code via remote GitHub URLs, uploaded ZIP archives, multiple local file uploads, or entire directory folders.
 - **Flexible Rules Extraction:** Supply compliance rules via standard YAML configuration files, or automatically extract text directly from dataset PDF documents.
 - **Local & Remote Scanning:** Use the CLI to traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
+- **Advanced Agentic RAG & HyDE Generation:** An integrated targeted audit pipeline that chunks the codebase and uses a HyDE (Hypothetical Document Embeddings) sub-agent to dynamically synthesize mock-violating code snippets matching your rules. This bridges the semantic gap between legal language and actual source code for highly precise vector retrieval.
 - **AI-Driven Analysis:** Leverages Google's Gemini 2.5 Flash model for context-aware static code analysis and precise violation detection.
 
 ## How It Works
@@ -52,7 +53,7 @@ For this initial Minimal Viable Product roll-out, we made a few deliberate trade
 3. **Remote Parsing:** The integration of `gitingest` natively pulls `.gitignore` respected code. Ensure private repositories provide a `GITHUB_TOKEN` to gitingest via environment variables if used.
 
 > [!NOTE] 
-> **Current State of Development:** Currently, the Web UI and CLI (`analyzer.py`) run entirely on the "Vanilla" Gemini pipeline (processing the codebase in a single context window pass). The advanced Agentic RAG logic is isolated in a separate script (`src/audit.py`) and is not yet integrated into the GUI or main CLI loop. It operates as a distinct standalone pipeline at the moment.
+> **Current State of Development:** Both the "Vanilla" (full context window) and "Advanced RAG" (chunking, embedding, vector search, and HyDE sub-agent) pipelines are now fully integrated into the Web Application. Users can toggle between these modes and select their retrieval strategies directly from the UI.
 
 ## Setup & Installation
 
