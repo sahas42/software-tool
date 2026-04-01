@@ -78,6 +78,7 @@ srcTabs.forEach(tab => {
 
 // ===================== PIPELINE + EMBED MODEL =====================
 const embedModelOptions = $('embed-model-options');
+const hydeOptions = $('hyde-options');
 
 function updateEmbedVisibility() {
   const pipelineRadios = document.getElementsByName('pipeline_type');
@@ -86,6 +87,9 @@ function updateEmbedVisibility() {
     if (r.checked) selectedPipeline = r.value;
   }
   embedModelOptions.style.display = selectedPipeline === 'advanced' ? 'block' : 'none';
+  if (hydeOptions) {
+    hydeOptions.style.display = selectedPipeline === 'advanced' ? 'block' : 'none';
+  }
 }
 
 // Attach listener to each pipeline radio button
@@ -393,6 +397,11 @@ form.addEventListener('submit', async (e) => {
       if (r.checked) selectedEmbed = r.value;
     }
     formData.append('embed_model', selectedEmbed);
+
+    const useHydeCheckbox = $('use-hyde-checkbox');
+    if (useHydeCheckbox) {
+      formData.append('use_hyde', useHydeCheckbox.checked ? 'true' : 'false');
+    }
   }
 
   if (activeTab === 'github') {

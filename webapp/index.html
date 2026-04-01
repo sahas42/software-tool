@@ -311,6 +311,18 @@
                 </label>
               </div>
             </div>
+
+            <!-- HyDE Strategy toggle: only visible when Advanced RAG is chosen -->
+            <div id="hyde-options" style="display:none; margin-top: 18px;">
+              <p class="step-desc" style="margin-bottom: 10px;">Retrieval Strategy:</p>
+              <label class="pipeline-option" style="padding: 12px 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: flex-start;">
+                <input type="checkbox" name="use_hyde" id="use-hyde-checkbox" checked style="margin-top: 4px; margin-right: 12px;">
+                <div style="display: flex; flex-direction: column;">
+                  <strong>Enable HyDE (Hypothetical Document Embeddings)</strong>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Uses an LLM agent to generate mock-violating code dynamically per-rule, bridging the semantics gap between natural language rules and source code.</div>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 
