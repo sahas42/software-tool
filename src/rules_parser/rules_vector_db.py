@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from langchain_chroma import Chroma
+from langchain_qdrant import Qdrant
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
+from qdrant_client import QdrantClient
+from qdrant_client.http import models as rest
 
 # 1. Setup Environment Paths (Cross-platform using Pathlib)
 current_file_dir = Path(__file__).resolve().parent
@@ -14,20 +16,31 @@ env_path = root_dir / ".env"
 load_dotenv(dotenv_path=env_path)
 
 # 2. Initialize Local Embeddings
-# This will auto-download the model on any teammate's machine on the first run.
 print("Loading local embedding model (BGE-Small)...")
 embeddings = HuggingFaceEmbeddings(
     model_name="BAAI/bge-small-en-v1.5",
-    model_kwargs={"device": "cpu"},  # Works on all Linux/Mac/Win machines
+    model_kwargs={"device": "cpu"},
 )
 
-# 3. Initialize Vector Store
-# Path is relative to the script so it works on any PC
-persist_db_path = current_file_dir / "chroma_langchain_db"
-vector_store = Chroma(
-    collection_name="source_code_collection",
-    embedding_function=embeddings,
-    persist_directory=str(persist_db_path),
+# 3. Initialize Qdrant Vector Store
+url = os.getenv("QDRANT_URL", ":memory:")
+api_key = os.getenv("QDRANT_API_KEY")
+client = QdrantClient(url=url, api_key=api_key)
+
+collection_name = "source_code_collection"
+
+# Ensure collection exists
+if not client.collection_exists(collection_name):
+    print(f"Creating collection '{collection_name}'...")
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=rest.VectorParams(size=384, distance=rest.Distance.COSINE), # BGE-Small is 384
+    )
+
+vector_store = Qdrant(
+    client=client,
+    collection_name=collection_name,
+    embeddings=embeddings,
 )
 
 # 4. Target the fetched_content folder
@@ -61,9 +74,8 @@ if all_docs:
 
     all_splits = text_splitter.split_documents(all_docs)
 
-    print(f"Adding {len(all_splits)} chunks to local ChromaDB...")
-    # No batching needed for local models - it's very fast!
+    print(f"Adding {len(all_splits)} chunks to Qdrant...")
     vector_store.add_documents(documents=all_splits)
-    print(f"Indexing complete. Database saved to: {persist_db_path}")
+    print(f"Indexing complete. Database: {url}")
 else:
     print("Nothing to index.")
