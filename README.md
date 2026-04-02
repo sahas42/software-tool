@@ -2,6 +2,15 @@
 
 An AI-driven compliance checker designed to audit codebases and detect dataset license/usage violations. It parses a target codebase and maps it against a set of allowed and barred usage rules defined in a configuration file, utilizing the Gemini 2.5 Flash model for static analysis and reasoning.
 
+## Key Features
+
+- **Web Interface:** A user-friendly Flask-based UI for easy interaction without the command line.
+- **Versatile Code Input:** Analyze code via remote GitHub URLs, uploaded ZIP archives, multiple local file uploads, or entire directory folders.
+- **Flexible Rules Extraction:** Supply compliance rules via standard YAML configuration files, or automatically extract text directly from dataset PDF documents.
+- **Local & Remote Scanning:** Use the CLI to traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
+- **Advanced Agentic RAG & HyDE Generation:** An integrated targeted audit pipeline that chunks the codebase and uses a HyDE (Hypothetical Document Embeddings) sub-agent to dynamically synthesize mock-violating code snippets matching your rules. This bridges the semantic gap between legal language and actual source code for highly precise vector retrieval.
+- **AI-Driven Analysis:** Leverages Google's Gemini 2.5 Flash model for context-aware static code analysis and precise violation detection.
+
 ## How It Works
 
 The tool orchestrates an end-to-end static audit pipeline:
@@ -43,6 +52,9 @@ For this initial Minimal Viable Product roll-out, we made a few deliberate trade
 2. **AI Provider:** We are hardcoded to use the Google GenAI SDK and specifically target the `gemini-2.5-flash` model. We also assume the usage of the free tier API which imposes rate ceilings. To mitigate 429 errors, `analyzer.py` utilizes exponential backoff to handle rate limits gracefully.
 3. **Remote Parsing:** The integration of `gitingest` natively pulls `.gitignore` respected code. Ensure private repositories provide a `GITHUB_TOKEN` to gitingest via environment variables if used.
 
+> [!NOTE] 
+> **Current State of Development:** Both the "Vanilla" (full context window) and "Advanced RAG" (chunking, embedding, vector search, and HyDE sub-agent) pipelines are now fully integrated into the Web Application. Users can toggle between these modes and select their retrieval strategies directly from the UI.
+
 ## Setup & Installation
 
 You should install this tool inside an isolated Python virtual environment.
@@ -60,8 +72,12 @@ python -m venv .venv
 # On macOS/Linux:
 # source .venv/bin/activate
 
-# 3. Install the package in editable mode with dependencies
+# 3. Install the dependencies
+# Option A (Recommended): Install the package itself in editable mode along with all dev/frontend dependencies via pyproject.toml
 pip install -e ".[dev]"
+
+# Option B: Alternatively, if you just want to install the required packages without installing the compliance checker as a module
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -89,6 +105,15 @@ You can pass a GitHub URL to the `--codebase` flag to scrape public repositories
 python -m compliance_checker --rules examples/rules.yaml --codebase https://github.com/sahas42/ocr
 ```
 
+### Example 3: Web Application (UI)
+A Flask-based web interface is also available for easier interaction:
+
+```bash
+python server.py
+```
+Then, open your browser and navigate to `http://localhost:5001`. You can upload rule files (YAML/PDF) and analyze local files, ZIP archives, or GitHub repositories directly from the UI.
+
+
 ### Example Output
 
 If violations are found, the system will trigger a non-zero exit code (`1`) and output a structured report:
@@ -115,6 +140,6 @@ Summary: The project breaks multiple rules including redistribution of raw data.
 
 ## Future Roadmap
 
-- [ ] **Chunking & Indexing:** Introduce an AST parser and RAG-based vector database (like Chroma/FAISS) to chunk large codebases dynamically instead of naive concatenation.
-
 - [ ] **IDE Integration?:** Expose the tool as a VS Code extension to block bad commits in real-time?
+
+- [ ] **Auto-Compliance Check on Push:** Automatically run the compliance check on every push to the repository.
