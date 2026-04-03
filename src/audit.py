@@ -11,6 +11,8 @@ from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 from src.compliance_checker.models import UsageRules, Violation, ComplianceReport
+from src.semantic_chunker import SemanticChunker
+
 
 # Available embedding models for the Advanced RAG pipeline.
 # Keys are the UI-facing identifiers sent from the frontend.
@@ -68,21 +70,26 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
 
     print(f"\n[Advanced Pipeline] Initializing...")
 
-    # 1. Parse into Langchain Documents
-    docs = []
-    if isinstance(codebase, dict):
-        for filepath, content in codebase.items():
-            docs.append(Document(page_content=content, metadata={"source": filepath}))
-    else:
-        # If codebase is a single string (like from gitingest remote fetch)
-        docs.append(Document(page_content=codebase, metadata={"source": "github_repository"}))
-
-    # 2. Smart Chunking (Python focused but works decently for generic text)
-    print("[Advanced Pipeline] Chunking codebase...")
-    splitter = RecursiveCharacterTextSplitter.from_language(
+    # 1. Parse and chunk codebase
+    texts = []
+    chunker = SemanticChunker()
+    fallback_splitter = RecursiveCharacterTextSplitter.from_language(
         language=Language.PYTHON, chunk_size=1500, chunk_overlap=150
     )
-    texts = splitter.split_documents(docs)
+
+    print("[Advanced Pipeline] Chunking codebase with strict semantic rules (Tree-sitter)...")
+    if isinstance(codebase, dict):
+        for filepath, content in codebase.items():
+            if filepath.endswith(".py"):
+                texts.extend(chunker.extract_chunks(content, {"source": filepath}))
+            else:
+                doc = Document(page_content=content, metadata={"source": filepath})
+                texts.extend(fallback_splitter.split_documents([doc]))
+    else:
+        # If codebase is a single string (general context)
+        doc = Document(page_content=codebase, metadata={"source": "github_repository"})
+        texts.extend(fallback_splitter.split_documents([doc]))
+
     print(f"[Advanced Pipeline] Created {len(texts)} semantic chunks.")
 
     # 3. Fast In-Memory Vector Store setup

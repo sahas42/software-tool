@@ -28,20 +28,22 @@ The tool orchestrates an end-to-end static audit pipeline:
 software-tool/
 ├── .env                           # Local environment variables (GEMINI_API_KEY)
 ├── examples/                      # Fixtures and sample code for testing
-│   ├── rules.yaml                 # Sample constraints for the "CodeSearchNet" dataset
-│   └── sample_project/            # A dummy ML project intentionally violating the rules
-│       └── train.py               # The dummy script containing the violations
-├── src/
-│   └── compliance_checker/        # Core package
-│       ├── __init__.py
-│       ├── __main__.py            # Module entry point (python -m compliance_checker)
-│       ├── analyzer.py            # Gemini API integration, retries, and schema enforcement
-│       ├── cli.py                 # Command Line Interface argument parsing
-│       ├── codebase_loader.py     # Filesystem traversal and source extraction
-│       └── models.py              # Pydantic schemas (UsageRules, Violation, Report)
-├── debug_api.py                   # Ad-hoc script to test Gemini API connectivity
+│   ├── rules.yaml                 # Sample constraints
+│   └── sample_project/            # Dummy ML project intentionally violating the rules
+├── fetch_github.py                # Script to scrape code from public repositories
 ├── pyproject.toml                 # Package configuration and dependencies
-└── README.md                      # This document
+├── requirements.txt               # Required Python packages
+├── README.md                      # This document
+├── server.py                      # Flask web server to run the frontend application
+├── src/
+│   ├── audit.py                   # Advanced Agentic RAG Pipeline logic
+│   ├── compliance_checker/        # Core CLI and static analysis package
+│   ├── rules_parser/              # Modules for parsing YAML and PDF rules
+│   └── semantic_chunker.py        # Tree-sitter powered code parser and chunker
+├── tests/                         # Automated unit tests (Pytest)
+│   ├── test_hyde.py
+│   └── test_semantic_chunker.py
+└── webapp/                        # Frontend UI assets (HTML, CSS, JS)
 ```
 
 ## MVP Assumptions & Constraints
@@ -113,6 +115,13 @@ python server.py
 ```
 Then, open your browser and navigate to `http://localhost:5001`. You can upload rule files (YAML/PDF) and analyze local files, ZIP archives, or GitHub repositories directly from the UI.
 
+
+### Running Tests
+To run the automated test suite and prevent module resolution errors (like `ModuleNotFoundError`), always use the `pytest` module flag from the project root:
+
+```bash
+python -m pytest tests/
+```
 
 ### Example Output
 
