@@ -419,12 +419,57 @@ form.addEventListener('submit', async (e) => {
     const data = await res.json();
     if (!res.ok) {
       showErrorState(data.error || `Server error (${res.status}). Please try again.`);
-    } else {
-      renderReport(data);
-      showReport();
+      return;
     }
+    
+    const taskId = data.task_id;
+    if (!taskId) {
+      // Fallback for vanilla pipeline if it returns directly
+      if (data.is_compliant !== undefined) {
+        renderReport(data);
+        showReport();
+        return;
+      }
+      showErrorState('No task ID returned from server.');
+      return;
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/status/${taskId}`;
+    const ws = new WebSocket(wsUrl);
+
+    // Stop automatic loading steps, we will let WebSocket decide when it is done
+    finishLoadingSteps();
+    loadingSection.style.display = 'flex';
+    
+    // We can show the progress in the first loading step text
+    const stepLabel = lSteps[0].querySelector('.label') || lSteps[0];
+    stepLabel.textContent = "Connecting to Celery task...";
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      console.log("WS Update:", msg);
+      
+      if (msg.message && msg.status !== "SUCCESS") {
+         stepLabel.textContent = `${msg.progress}% - ${msg.message}`;
+      }
+
+      if (msg.status === "SUCCESS") {
+        ws.close();
+        renderReport(msg.result);
+        showReport();
+      } else if (msg.status === "FAILURE") {
+        ws.close();
+        showErrorState(msg.error || "Task failed in backend worker.");
+      }
+    };
+
+    ws.onerror = (err) => {
+        showErrorState("WebSocket connection failed. Make sure the server is configured correctly.");
+    };
+
   } catch (err) {
-    showErrorState('Network error: Could not reach the server. Make sure Flask is running on port 5001.');
+    showErrorState('Network error: Could not reach the server.');
   }
 });
 

@@ -50,7 +50,7 @@ def generate_hyde_snippet(rule: str, llm: ChatGoogleGenerativeAI) -> str:
         print(f"[Advanced Pipeline] HyDE Generation Error for rule '{rule[:30]}...': {e}")
         return rule  # Fall back to the original rule if generation fails
 
-def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str, embed_model: str = "jina", use_hyde: bool = True) -> ComplianceReport:
+def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str, embed_model: str = "jina", use_hyde: bool = True, progress_callback=None) -> ComplianceReport:
     """
     Advanced RAG Pipeline:
     Dynamically chunks the codebase in-memory, embeds it, and runs a localized RAG query
@@ -67,6 +67,8 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
     embed_cfg = EMBEDDING_MODELS.get(embed_model, EMBEDDING_MODELS["jina"])
 
     print(f"\n[Advanced Pipeline] Initializing...")
+    if progress_callback:
+        progress_callback(10, "Setting up Advanced RAG Pipeline...")
 
     # 1. Parse into Langchain Documents
     docs = []
@@ -79,6 +81,8 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
 
     # 2. Smart Chunking (Python focused but works decently for generic text)
     print("[Advanced Pipeline] Chunking codebase...")
+    if progress_callback:
+        progress_callback(20, "Chunking codebase for vector search...")
     splitter = RecursiveCharacterTextSplitter.from_language(
         language=Language.PYTHON, chunk_size=1500, chunk_overlap=150
     )
@@ -122,7 +126,12 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
     print("-" * 60)
 
     # 5. Iterative Agentic RAG Audit
+    total_rules = len(barred_rules)
     for i, rule in enumerate(barred_rules, 1):
+        if progress_callback:
+            progress = 30 + int((i / total_rules) * 60) # Scaled from 30% to 90%
+            progress_callback(progress, f"Checking rule {i}/{total_rules}: {rule[:30]}...")
+
         print(f"Checking Rule #{i}: {rule[:60]}...")
         
         # Retrieve Top K suspicious chunks
