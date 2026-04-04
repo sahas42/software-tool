@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from langchain_qdrant import Qdrant
+from langchain_qdrant import QdrantVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
@@ -23,9 +23,9 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 # 3. Initialize Qdrant Vector Store
-url = os.getenv("QDRANT_URL", ":memory:")
+url = os.getenv("QDRANT_URL")
 api_key = os.getenv("QDRANT_API_KEY")
-client = QdrantClient(url=url, api_key=api_key)
+client = QdrantClient(url=url, api_key=api_key) if url else QdrantClient(location=":memory:")
 
 collection_name = "source_code_collection"
 
@@ -37,10 +37,10 @@ if not client.collection_exists(collection_name):
         vectors_config=rest.VectorParams(size=384, distance=rest.Distance.COSINE), # BGE-Small is 384
     )
 
-vector_store = Qdrant(
+vector_store = QdrantVectorStore(
     client=client,
     collection_name=collection_name,
-    embeddings=embeddings,
+    embedding=embeddings,
 )
 
 # 4. Target the fetched_content folder

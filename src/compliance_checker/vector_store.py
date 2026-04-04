@@ -2,7 +2,7 @@ import hashlib
 from typing import List, Dict, Optional
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-from langchain_qdrant import Qdrant
+from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
 import os
@@ -13,9 +13,11 @@ def get_file_hash(content: str) -> str:
 
 def get_qdrant_client() -> QdrantClient:
     """Initializes and returns a QdrantClient based on environment variables."""
-    url = os.getenv("QDRANT_URL", ":memory:")
+    url = os.getenv("QDRANT_URL")
     api_key = os.getenv("QDRANT_API_KEY")
-    return QdrantClient(url=url, api_key=api_key)
+    if url:
+        return QdrantClient(url=url, api_key=api_key)
+    return QdrantClient(location=":memory:")
 
 class IncrementalVectorStore:
     def __init__(self, collection_name: str, embeddings: Embeddings):
@@ -40,13 +42,13 @@ class IncrementalVectorStore:
                 vectors_config=rest.VectorParams(size=vector_size, distance=rest.Distance.COSINE),
             )
         
-        self.vector_store = Qdrant(
+        self.vector_store = QdrantVectorStore(
             client=self.client,
             collection_name=self.collection_name,
-            embeddings=self.embeddings,
+            embedding=self.embeddings,
         )
 
-    def sync_codebase(self, codebase: Dict[str, str], splitter):
+    def sync_codebase(self, codebase: Dict[str, str], splitter, chunk_fn=None):
         """
         Incrementally synchronizes the codebase with the vector store.
         1. Identifies changed/new/deleted files.
@@ -96,9 +98,16 @@ class IncrementalVectorStore:
                 ),
             )
             
-            # Create new chunks
-            doc = Document(page_content=content, metadata={"source": filepath, "file_hash": current_hash})
-            chunks = splitter.split_documents([doc])
+            # Create new chunks — use custom chunk_fn if provided, else default splitter
+            metadata = {"source": filepath, "file_hash": current_hash}
+            if chunk_fn is not None:
+                chunks = chunk_fn(filepath, content, metadata)
+                # Ensure file_hash is in all chunk metadata
+                for c in chunks:
+                    c.metadata["file_hash"] = current_hash
+            else:
+                doc = Document(page_content=content, metadata=metadata)
+                chunks = splitter.split_documents([doc])
             
             # Add to vector store
             self.vector_store.add_documents(chunks)

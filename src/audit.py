@@ -12,6 +12,7 @@ from langchain_core.documents import Document
 
 from src.compliance_checker.models import UsageRules, Violation, ComplianceReport
 from src.compliance_checker.vector_store import IncrementalVectorStore
+from src.semantic_chunker import SemanticChunker
 
 # Available embedding models for the Advanced RAG pipeline.
 # Keys are the UI-facing identifiers sent from the frontend.
@@ -78,7 +79,6 @@ def analyze_advanced(
 
     # Normalize codebase into a dict for incremental indexing
     if not isinstance(codebase, dict):
-        # If codebase is a single string (like from gitingest remote fetch)
         codebase = {"github_repository": codebase}
 
     # Initialize Embeddings
@@ -88,19 +88,29 @@ def analyze_advanced(
         model_kwargs=embed_cfg["model_kwargs"],
     )
 
-    # Smart Chunking Splitter
-    splitter = RecursiveCharacterTextSplitter.from_language(
+    # Set up tree-sitter semantic chunker for Python + fallback for other files
+    semantic_chunker = SemanticChunker()
+    fallback_splitter = RecursiveCharacterTextSplitter.from_language(
         language=Language.PYTHON, chunk_size=1500, chunk_overlap=150
     )
 
+    def chunk_fn(filepath, content, metadata):
+        """Use tree-sitter for .py files, fallback splitter for everything else."""
+        if filepath.endswith(".py"):
+            return semantic_chunker.extract_chunks(content, metadata)
+        else:
+            doc = Document(page_content=content, metadata=metadata)
+            return fallback_splitter.split_documents([doc])
+
+    print("[Advanced Pipeline] Chunking codebase with semantic rules (Tree-sitter for Python)...")
+
     # Collection name is scoped to repo and embed_model
-    # We clean up the repo_id to be a valid collection name
     safe_repo_id = "".join(c if c.isalnum() else "_" for c in repo_id).lower()
     collection_name = f"repo_{safe_repo_id}_{embed_model}"
 
-    # 3. Incremental Vector Store setup
+    # Incremental Vector Store setup with semantic chunking
     store = IncrementalVectorStore(collection_name=collection_name, embeddings=embeddings)
-    vector_store = store.sync_codebase(codebase, splitter)
+    vector_store = store.sync_codebase(codebase, fallback_splitter, chunk_fn=chunk_fn)
 
     # 4. Initialize LLM (Requesting JSON output matching our schema)
     llm = ChatGoogleGenerativeAI(
