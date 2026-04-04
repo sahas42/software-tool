@@ -151,9 +151,17 @@ def analyze_endpoint():
     use_hyde_raw = request.form.get("use_hyde", "true").lower()
     use_hyde = use_hyde_raw in ("true", "1", "yes", "on")
     
+    # Determine repo_id for incremental indexing
+    if codebase_type == "github":
+        repo_id = request.form.get("codebase_url", "github_repo")
+    elif codebase_type == "zip":
+        repo_id = request.files.get("codebase_zip").filename
+    else:
+        repo_id = "uploaded_files"
+
     try:
         if pipeline_type == "advanced":
-            report = analyze_advanced(rules, codebase, api_key, embed_model=embed_model, use_hyde=use_hyde)
+            report = analyze_advanced(rules, codebase, api_key, repo_id=repo_id, embed_model=embed_model, use_hyde=use_hyde)
         else:
             report = analyze(rules, codebase, api_key)
     except Exception as e:

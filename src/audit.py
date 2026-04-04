@@ -1,16 +1,18 @@
 import os
 import io
 import json
+import hashlib
 from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 from src.compliance_checker.models import UsageRules, Violation, ComplianceReport
+from src.compliance_checker.vector_store import IncrementalVectorStore
+from src.semantic_chunker import SemanticChunker
 
 # Available embedding models for the Advanced RAG pipeline.
 # Keys are the UI-facing identifiers sent from the frontend.
@@ -50,15 +52,22 @@ def generate_hyde_snippet(rule: str, llm: ChatGoogleGenerativeAI) -> str:
         print(f"[Advanced Pipeline] HyDE Generation Error for rule '{rule[:30]}...': {e}")
         return rule  # Fall back to the original rule if generation fails
 
-def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key: str, embed_model: str = "jina", use_hyde: bool = True, progress_callback=None) -> ComplianceReport:
+def analyze_advanced(
+    rules: UsageRules, 
+    codebase: dict[str, str] | str, 
+    api_key: str, 
+    repo_id: str = "default_repo",
+    embed_model: str = "jina", 
+    use_hyde: bool = True
+) -> ComplianceReport:
     """
     Advanced RAG Pipeline:
-    Dynamically chunks the codebase in-memory, embeds it, and runs a localized RAG query
-    for each barred rule, aggregating the results into a final structured ComplianceReport.
+    Dynamically chunks the codebase, embeds it into a managed Qdrant vector store
+    incrementally, and runs a localized RAG query for each barred rule.
 
     Args:
-        embed_model: Key from EMBEDDING_MODELS dict. Defaults to "jina"
-                     (jinaai/jina-embeddings-v2-base-code).
+        repo_id: A unique identifier for the repository (e.g., GitHub URL or folder name).
+        embed_model: Key from EMBEDDING_MODELS dict. Defaults to "jina".
     """
     if not api_key:
         raise ValueError("Google API Key is required for the Advanced Pipeline.")
@@ -66,44 +75,42 @@ def analyze_advanced(rules: UsageRules, codebase: dict[str, str] | str, api_key:
     # Resolve embedding config — fall back to jina if an unknown key is supplied
     embed_cfg = EMBEDDING_MODELS.get(embed_model, EMBEDDING_MODELS["jina"])
 
-    print(f"\n[Advanced Pipeline] Initializing...")
-    if progress_callback:
-        progress_callback(10, "Setting up Advanced RAG Pipeline...")
+    print(f"\n[Advanced Pipeline] Initializing for repo '{repo_id}'...")
 
-    # 1. Parse into Langchain Documents
-    docs = []
-    if isinstance(codebase, dict):
-        for filepath, content in codebase.items():
-            docs.append(Document(page_content=content, metadata={"source": filepath}))
-    else:
-        # If codebase is a single string (like from gitingest remote fetch)
-        docs.append(Document(page_content=codebase, metadata={"source": "github_repository"}))
+    # Normalize codebase into a dict for incremental indexing
+    if not isinstance(codebase, dict):
+        codebase = {"github_repository": codebase}
 
-    # 2. Smart Chunking (Python focused but works decently for generic text)
-    print("[Advanced Pipeline] Chunking codebase...")
-    if progress_callback:
-        progress_callback(20, "Chunking codebase for vector search...")
-    splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.PYTHON, chunk_size=1500, chunk_overlap=150
-    )
-    texts = splitter.split_documents(docs)
-    print(f"[Advanced Pipeline] Created {len(texts)} semantic chunks.")
-
-    # 3. Fast In-Memory Vector Store setup
+    # Initialize Embeddings
     print(f"[Advanced Pipeline] Loading embedding model: {embed_cfg['label']}...")
     embeddings = HuggingFaceEmbeddings(
         model_name=embed_cfg["model_name"],
         model_kwargs=embed_cfg["model_kwargs"],
     )
-    
-    # Create an ephemeral Chroma DB explicitly (no persistent directory).
-    # Collection name is scoped to the embed_model key so Jina (768-dim) and
-    # BGE (384-dim) never share a collection and cause a dimension mismatch.
-    vector_store = Chroma.from_documents(
-        documents=texts,
-        embedding=embeddings,
-        collection_name=f"ephemeral_source_code_{embed_model}"
+
+    # Set up tree-sitter semantic chunker for Python + fallback for other files
+    semantic_chunker = SemanticChunker()
+    fallback_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.PYTHON, chunk_size=1500, chunk_overlap=150
     )
+
+    def chunk_fn(filepath, content, metadata):
+        """Use tree-sitter for .py files, fallback splitter for everything else."""
+        if filepath.endswith(".py"):
+            return semantic_chunker.extract_chunks(content, metadata)
+        else:
+            doc = Document(page_content=content, metadata=metadata)
+            return fallback_splitter.split_documents([doc])
+
+    print("[Advanced Pipeline] Chunking codebase with semantic rules (Tree-sitter for Python)...")
+
+    # Collection name is scoped to repo and embed_model
+    safe_repo_id = "".join(c if c.isalnum() else "_" for c in repo_id).lower()
+    collection_name = f"repo_{safe_repo_id}_{embed_model}"
+
+    # Incremental Vector Store setup with semantic chunking
+    store = IncrementalVectorStore(collection_name=collection_name, embeddings=embeddings)
+    vector_store = store.sync_codebase(codebase, fallback_splitter, chunk_fn=chunk_fn)
 
     # 4. Initialize LLM (Requesting JSON output matching our schema)
     llm = ChatGoogleGenerativeAI(
