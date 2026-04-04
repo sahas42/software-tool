@@ -4,3 +4,6 @@
 venv/
 fetched_content/
 plan/
+node_modules/
+.next/
+qdrant_data/

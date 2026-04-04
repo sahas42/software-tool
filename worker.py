@@ -10,6 +10,7 @@ def analyze_codebase_task(
     rules_dict: dict,
     codebase: dict,
     api_key: str,
+    repo_id: str = "default_repo",
     embed_model: str = "jina",
     use_hyde: bool = True
 ):
@@ -34,6 +35,7 @@ def analyze_codebase_task(
             rules=rules,
             codebase=codebase,
             api_key=api_key,
+            repo_id=rules.dataset.name,  # Use dataset name as a default repo context if none provided
             embed_model=embed_model,
             use_hyde=use_hyde,
             progress_callback=progress_reporter

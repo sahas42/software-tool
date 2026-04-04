@@ -140,10 +140,13 @@ async def analyze_endpoint(
         return JSONResponse(status_code=422, content={"error": "No source files found. Check file types / extensions."})
 
     # Submit Celery Task
+    repo_id = codebase_url if codebase_type == "github" else "local_upload"
+    
     task = analyze_codebase_task.delay(
         rules_dict=rules.model_dump(),
         codebase=codebase,
         api_key=api_key,
+        repo_id=repo_id,
         embed_model=embed_model,
         use_hyde=use_hyde
     )
