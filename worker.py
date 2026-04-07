@@ -24,6 +24,9 @@ def analyze_codebase_task(
         self.update_state(state="PROGRESS", meta={"progress": progress, "status": status_msg})
 
     try:
+        if self.is_aborted():
+            raise Exception("Task cancelled by user")
+        
         progress_reporter(5, "Task starting...")
         
         rules = UsageRules(**rules_dict)
