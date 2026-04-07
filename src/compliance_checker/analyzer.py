@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 import json
+import re
 import time
 import sys
+from pathlib import Path
 from google import genai
 from .models import UsageRules, ComplianceReport
 
 MAX_RETRIES = 3
-INITIAL_DELAY = 10  # seconds
+INITIAL_DELAY = 10
+MAX_RELEVANT_TXT = 5
 
 
 SYSTEM_PROMPT = """\
@@ -35,6 +38,49 @@ Only flag clear, concrete violations.
 """
 
 
+def _extract_relevance_terms(rules: UsageRules) -> set[str]:
+    raw_text = " ".join(
+        [
+            rules.dataset.name or "",
+            rules.dataset.source or "",
+            rules.dataset.license or "",
+            rules.dataset.description or "",
+            " ".join(rules.allowed_uses or []),
+            " ".join(rules.barred_uses or []),
+        ]
+    )
+    candidates = re.findall(r"\b[a-z0-9]{3,}\b", raw_text.lower())
+    return set(candidates) or {"dataset", "data"}
+
+
+def _score_text(query_terms: set[str], text: str) -> int:
+    normalized = text.lower()
+    return sum(1 for term in query_terms if term in normalized)
+
+
+def _filter_relevant_txt_files(codebase: dict[str, str], rules: UsageRules) -> dict[str, str]:
+    query_terms = _extract_relevance_terms(rules)
+    txt_scores: list[tuple[int, str, str]] = []
+
+    for filepath, content in codebase.items():
+        if Path(filepath).suffix.lower() != ".txt":
+            continue
+        score = _score_text(query_terms, filepath + " " + content)
+        txt_scores.append((score, filepath, content))
+
+    txt_scores.sort(reverse=True, key=lambda item: item[0])
+    keep = {}
+    for score, filepath, content in txt_scores:
+        if score > 0:
+            keep[filepath] = content
+    # Keep up to MAX_RELEVANT_TXT top .txt files if none scored positively (fallback)
+    if not keep:
+        for score, filepath, content in txt_scores[:MAX_RELEVANT_TXT]:
+            keep[filepath] = content
+
+    return keep
+
+
 def _build_user_prompt(rules: UsageRules, codebase: dict[str, str] | str) -> str:
     """Compose the user message with rules + code."""
     parts: list[str] = []
@@ -55,9 +101,24 @@ def _build_user_prompt(rules: UsageRules, codebase: dict[str, str] | str) -> str
 
     parts.append("\n## Source Code")
     if isinstance(codebase, dict):
+        relevant_txt = _filter_relevant_txt_files(codebase, rules)
         for filepath, content in codebase.items():
+            suffix = Path(filepath).suffix.lower()
+            if suffix == ".txt" and filepath not in relevant_txt:
+                continue
             parts.append(f"\n### File: {filepath}")
             parts.append(f"```\n{content}\n```")
+
+        if relevant_txt:
+            parts.append("\n## Note: Filtered .txt files")
+            parts.append(
+                f"Included {len(relevant_txt)} relevant .txt file(s) and excluded irrelevant .txt files."
+            )
+            parts.append("\n## Included .txt Files:")
+            for path in sorted(relevant_txt.keys()):
+                parts.append(f"- {path}")
+        else:
+            parts.append("\n## Note: No .txt files were included because none were relevant to the rules query.")
     else:
         # It's a single string digest from gitingest
         parts.append(f"\n```\n{codebase}\n```")
