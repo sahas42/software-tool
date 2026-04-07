@@ -19,6 +19,8 @@ def analyze_codebase_task(
     Sends progress state up to Redis for the WebSocket to consume.
     """
     def progress_reporter(progress: int, status_msg: str):
+        if self.is_aborted():  # Check if revoked
+            raise Exception("Task cancelled by user")
         self.update_state(state="PROGRESS", meta={"progress": progress, "status": status_msg})
 
     try:
