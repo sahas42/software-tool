@@ -153,6 +153,14 @@ async def analyze_endpoint(
 
     return {"task_id": task.id, "status": "PENDING"}
 
+@app.post("/api/tasks/{task_id}/cancel")
+async def cancel_task(task_id: str):
+    try:
+        celery_app.control.revoke(task_id, terminate=True)
+        return {"message": f"Task {task_id} cancellation requested."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to cancel task: {e}")
+
 @app.websocket("/ws/status/{task_id}")
 async def websocket_status(websocket: WebSocket, task_id: str):
     await websocket.accept()
@@ -171,6 +179,9 @@ async def websocket_status(websocket: WebSocket, task_id: str):
             elif res.state == "FAILURE":
                 progress = 100
                 status_msg = "Failed"
+            elif res.state == "REVOKED":
+                progress = 0
+                status_msg = "Cancelled"
             else:
                 progress = 0
                 status_msg = res.state
@@ -184,7 +195,7 @@ async def websocket_status(websocket: WebSocket, task_id: str):
                 "error": res.info.get("error", str(res.result)) if res.state == "FAILURE" else None
             })
             
-            if res.ready():
+            if res.ready() or res.state == "REVOKED":
                 break
             
             await asyncio.sleep(1)
