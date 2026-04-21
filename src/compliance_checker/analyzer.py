@@ -99,6 +99,36 @@ def _build_user_prompt(rules: UsageRules, codebase: dict[str, str] | str) -> str
     for use in rules.barred_uses:
         parts.append(f"- {use}")
 
+    # ── Extended rule sections (non-empty only) ──
+    if rules.conditions:
+        parts.append("\n## Conditions")
+        for c in rules.conditions:
+            parts.append(f"- {c}")
+
+    if rules.attribution_requirements:
+        parts.append("\n## Attribution Requirements")
+        for a in rules.attribution_requirements:
+            parts.append(f"- {a}")
+
+    if rules.redistribution_terms:
+        parts.append("\n## Redistribution Terms")
+        for r in rules.redistribution_terms:
+            parts.append(f"- {r}")
+
+    if rules.geographic_restrictions:
+        parts.append("\n## Geographic Restrictions")
+        for g in rules.geographic_restrictions:
+            parts.append(f"- {g}")
+
+    if rules.temporal_constraints:
+        parts.append("\n## Temporal Constraints")
+        for t in rules.temporal_constraints:
+            parts.append(f"- {t}")
+
+    if rules.raw_extracted_text:
+        parts.append("\n## Original Legal Text (Reference)")
+        parts.append(f"```\n{rules.raw_extracted_text}\n```")
+
     parts.append("\n## Source Code")
     if isinstance(codebase, dict):
         relevant_txt = _filter_relevant_txt_files(codebase, rules)
