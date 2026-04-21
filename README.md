@@ -31,6 +31,7 @@ software-tool/
 │   ├── rules.yaml                 # Sample constraints
 │   └── sample_project/            # Dummy ML project intentionally violating the rules
 ├── fetch_github.py                # Script to scrape code from public repositories
+├── frontend/                      # Modern Next.js web application interface
 ├── pyproject.toml                 # Package configuration and dependencies
 ├── requirements.txt               # Required Python packages
 ├── README.md                      # This document
@@ -107,13 +108,29 @@ You can pass a GitHub URL to the `--codebase` flag to scrape public repositories
 python -m compliance_checker --rules examples/rules.yaml --codebase https://github.com/sahas42/ocr
 ```
 
-### Example 3: Web Application (UI)
-A Flask-based web interface is also available for easier interaction:
+### Example 3: Web Application (Vanilla UI)
+A basic Flask-based web interface is available for easier interaction:
 
 ```bash
 python server.py
 ```
 Then, open your browser and navigate to `http://localhost:5001`. You can upload rule files (YAML/PDF) and analyze local files, ZIP archives, or GitHub repositories directly from the UI.
+
+### Example 4: Modern Web Application (Next.js UI)
+A modern, advanced Agentic Scanner interface built with Next.js is also available. It connects to the Flask backend API.
+
+First, ensure the backend is running:
+```bash
+python server.py
+```
+
+Then, in a separate terminal, install dependencies and start the Next.js frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Finally, open your browser and navigate to `http://localhost:3000` to access the modern web app interface.
 
 
 ### Running Tests
