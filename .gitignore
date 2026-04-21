@@ -7,3 +7,4 @@ plan/
 node_modules/
 .next/
 qdrant_data/
+frontend/next-env.d.ts

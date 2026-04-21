@@ -15,6 +15,13 @@ class UsageRules(BaseModel):
     dataset: DatasetInfo
     allowed_uses: list[str]
     barred_uses: list[str]
+    # Extended fields for richer legal-PDF extraction (all optional for backward compat)
+    conditions: list[str] = []                # Conditional usage clauses ("Only if …", "Provided that …")
+    attribution_requirements: list[str] = []  # Citation / attribution obligations
+    redistribution_terms: list[str] = []      # Rules on sharing / redistribution
+    geographic_restrictions: list[str] = []   # Jurisdiction-based constraints
+    temporal_constraints: list[str] = []      # Time-limited permissions
+    raw_extracted_text: str = ""              # Full original PDF text for audit reference
 
 
 class Violation(BaseModel):

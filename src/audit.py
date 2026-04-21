@@ -132,19 +132,29 @@ def analyze_advanced(
     structured_llm = llm.with_structured_output(ViolationListWrapper)
 
     all_violations = []
-    barred_rules = rules.barred_uses
+
+    # ── Build the full rule list across all auditable categories ──
+    audit_rules: list[tuple[str, str]] = []  # (category_label, rule_text)
+    for rule in rules.barred_uses:
+        audit_rules.append(("BARRED USE", rule))
+    for rule in rules.conditions:
+        audit_rules.append(("CONDITION", rule))
+    for rule in rules.attribution_requirements:
+        audit_rules.append(("ATTRIBUTION REQUIREMENT", rule))
+    for rule in rules.redistribution_terms:
+        audit_rules.append(("REDISTRIBUTION TERM", rule))
     
-    print(f"\n[Advanced Pipeline] Starting Audit: Checking {len(barred_rules)} barred rules...")
+    print(f"\n[Advanced Pipeline] Starting Audit: Checking {len(audit_rules)} rules across all categories...")
     print("-" * 60)
 
     # 5. Iterative Agentic RAG Audit
-    total_rules = len(barred_rules)
-    for i, rule in enumerate(barred_rules, 1):
+    total_rules = len(audit_rules)
+    for i, (category, rule) in enumerate(audit_rules, 1):
         if progress_callback:
             progress = 30 + int((i / total_rules) * 60) # Scaled from 30% to 90%
             progress_callback(progress, f"Checking rule {i}/{total_rules}: {rule[:30]}...")
 
-        print(f"Checking Rule #{i}: {rule[:60]}...")
+        print(f"Checking [{category}] Rule #{i}: {rule[:60]}...")
         
         # Retrieve Top K suspicious chunks
         if use_hyde:
@@ -169,9 +179,9 @@ def analyze_advanced(
         prompt = f"""
         SYSTEM: You are a Senior Software Compliance Auditor analyzing code snippets retrieved via a vector search.
         
-        TASK: Compare the specific barred RULE below against the PROVIDED CODE SNIPPETS to definitively determine if the rule is violated.
+        TASK: Compare the specific {category} rule below against the PROVIDED CODE SNIPPETS to definitively determine if the rule is violated.
         
-        BARRED RULE: "{rule}"
+        {category} RULE: "{rule}"
         
         CODE SNIPPETS:
         {code_context}
