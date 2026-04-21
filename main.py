@@ -13,6 +13,7 @@ from pydantic import BaseModel
 import yaml
 
 from src.compliance_checker.models import UsageRules, DatasetInfo
+from src.compliance_checker.pdf_rule_extractor import extract_rules_from_pdf
 from src.compliance_checker.codebase_loader import load_codebase
 from worker import analyze_codebase_task
 from celery_app import celery_app
@@ -36,21 +37,9 @@ def parse_rules_from_yaml(content: str) -> UsageRules:
     raw = yaml.safe_load(content)
     return UsageRules(**raw)
 
-def parse_rules_from_pdf(file_bytes: bytes) -> UsageRules:
-    try:
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(file_bytes))
-        text = "\n".join(page.extract_text() or "" for page in reader.pages)
-        try:
-            return parse_rules_from_yaml(text)
-        except Exception:
-            return UsageRules(
-                dataset=DatasetInfo(name="Extracted from PDF", description=text[:500]),
-                allowed_uses=["General research (extracted from PDF — please review)"],
-                barred_uses=["Any use not covered above (extracted from PDF — please review)"],
-            )
-    except ImportError:
-        raise ValueError("pypdf is not installed. Run: pip install pypdf.")
+def parse_rules_from_pdf(file_bytes: bytes, api_key: str = "") -> UsageRules:
+    """Extract rules from a legal PDF using LLM-powered structured extraction."""
+    return extract_rules_from_pdf(file_bytes, api_key=api_key)
 
 def load_from_zip(zip_bytes: bytes, extensions: list[str]) -> dict[str, str]:
     files: dict[str, str] = {}
@@ -108,12 +97,12 @@ async def analyze_endpoint(
         if filename.endswith((".yaml", ".yml")):
             rules = parse_rules_from_yaml(file_bytes.decode("utf-8"))
         elif filename.endswith(".pdf"):
-            rules = parse_rules_from_pdf(file_bytes)
+            rules = parse_rules_from_pdf(file_bytes, api_key=api_key)
         else:
             try:
                 rules = parse_rules_from_yaml(file_bytes.decode("utf-8", errors="ignore"))
             except Exception:
-                rules = parse_rules_from_pdf(file_bytes)
+                rules = parse_rules_from_pdf(file_bytes, api_key=api_key)
     except Exception as e:
         return JSONResponse(status_code=422, content={"error": f"Failed to parse rules file: {e}"})
 
