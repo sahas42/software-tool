@@ -58,7 +58,8 @@ def analyze_advanced(
     api_key: str, 
     repo_id: str = "default_repo",
     embed_model: str = "jina", 
-    use_hyde: bool = True
+    use_hyde: bool = True,
+    progress_callback=None
 ) -> ComplianceReport:
     """
     Advanced RAG Pipeline:
@@ -76,6 +77,8 @@ def analyze_advanced(
     embed_cfg = EMBEDDING_MODELS.get(embed_model, EMBEDDING_MODELS["jina"])
 
     print(f"\n[Advanced Pipeline] Initializing for repo '{repo_id}'...")
+    if progress_callback:
+        progress_callback(10, f"Setting up Advanced RAG Pipeline for '{repo_id}'...")
 
     # Normalize codebase into a dict for incremental indexing
     if not isinstance(codebase, dict):
@@ -103,6 +106,8 @@ def analyze_advanced(
             return fallback_splitter.split_documents([doc])
 
     print("[Advanced Pipeline] Chunking codebase with semantic rules (Tree-sitter for Python)...")
+    if progress_callback:
+        progress_callback(20, "Chunking codebase for vector search...")
 
     # Collection name is scoped to repo and embed_model
     safe_repo_id = "".join(c if c.isalnum() else "_" for c in repo_id).lower()

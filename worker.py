@@ -10,6 +10,7 @@ def analyze_codebase_task(
     rules_dict: dict,
     codebase: dict,
     api_key: str,
+    repo_id: str = "default_repo",
     embed_model: str = "jina",
     use_hyde: bool = True
 ):
@@ -18,9 +19,14 @@ def analyze_codebase_task(
     Sends progress state up to Redis for the WebSocket to consume.
     """
     def progress_reporter(progress: int, status_msg: str):
+        if self.is_aborted():  # Check if revoked
+            raise Exception("Task cancelled by user")
         self.update_state(state="PROGRESS", meta={"progress": progress, "status": status_msg})
 
     try:
+        if self.is_aborted():
+            raise Exception("Task cancelled by user")
+        
         progress_reporter(5, "Task starting...")
         
         rules = UsageRules(**rules_dict)
@@ -34,6 +40,7 @@ def analyze_codebase_task(
             rules=rules,
             codebase=codebase,
             api_key=api_key,
+            repo_id=rules.dataset.name,  # Use dataset name as a default repo context if none provided
             embed_model=embed_model,
             use_hyde=use_hyde,
             progress_callback=progress_reporter

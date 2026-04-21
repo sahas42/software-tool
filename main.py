@@ -140,15 +140,26 @@ async def analyze_endpoint(
         return JSONResponse(status_code=422, content={"error": "No source files found. Check file types / extensions."})
 
     # Submit Celery Task
+    repo_id = codebase_url if codebase_type == "github" else "local_upload"
+    
     task = analyze_codebase_task.delay(
         rules_dict=rules.model_dump(),
         codebase=codebase,
         api_key=api_key,
+        repo_id=repo_id,
         embed_model=embed_model,
         use_hyde=use_hyde
     )
 
     return {"task_id": task.id, "status": "PENDING"}
+
+@app.post("/api/tasks/{task_id}/cancel")
+async def cancel_task(task_id: str):
+    try:
+        celery_app.control.revoke(task_id, terminate=True)
+        return {"message": f"Task {task_id} cancellation requested."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to cancel task: {e}")
 
 @app.websocket("/ws/status/{task_id}")
 async def websocket_status(websocket: WebSocket, task_id: str):
@@ -168,6 +179,9 @@ async def websocket_status(websocket: WebSocket, task_id: str):
             elif res.state == "FAILURE":
                 progress = 100
                 status_msg = "Failed"
+            elif res.state == "REVOKED":
+                progress = 0
+                status_msg = "Cancelled"
             else:
                 progress = 0
                 status_msg = res.state
@@ -181,7 +195,7 @@ async def websocket_status(websocket: WebSocket, task_id: str):
                 "error": res.info.get("error", str(res.result)) if res.state == "FAILURE" else None
             })
             
-            if res.ready():
+            if res.ready() or res.state == "REVOKED":
                 break
             
             await asyncio.sleep(1)
