@@ -108,12 +108,14 @@ docker-compose up -d
 
 ## Usage
 
-You must provide a valid Gemini API Key. You can set it in a `.env` file at the root of the project to avoid passing it every time:
+You must provide a valid Gemini API Key. For backend and command-line operations (CLI), you can set it in a `.env` file at the root of the project:
 
 ```bash
 # Create a .env file
 echo GEMINI_API_KEY=your_actual_api_key_here > .env
 ```
+
+> **Note for Web Application Users:** Due to client-side validations, even if the backend environment variable is set, you **must paste your API Key** directly into the frontend UI field before submitting an audit request.
 
 **CRITICAL NOTE:** Always run the commands below from the *root directory of the project* (`software-tool/`), **not** from inside the `src/` directory. If you run it from `src/`, relative paths like `examples/rules.yaml` will fail with a `FileNotFoundError`.
 
