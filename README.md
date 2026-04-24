@@ -27,24 +27,36 @@ The tool orchestrates an end-to-end static audit pipeline:
 ```text
 software-tool/
 ├── .env                           # Local environment variables (GEMINI_API_KEY)
+├── backend/                       # Backend specific files
+├── celery_app.py                  # Celery app initialization for background tasks
+├── docker-compose.yml             # Docker composition for services
+├── docs-and-plans/                # Project planning and SRS documents
 ├── examples/                      # Fixtures and sample code for testing
 │   ├── rules.yaml                 # Sample constraints
 │   └── sample_project/            # Dummy ML project intentionally violating the rules
 ├── fetch_github.py                # Script to scrape code from public repositories
 ├── frontend/                      # Modern Next.js web application interface
+├── literature-review/             # SOTA review and research documents
+├── main.py                        # Main entry point script
+├── plan/                          # Legacy and current release plans
 ├── pyproject.toml                 # Package configuration and dependencies
-├── requirements.txt               # Required Python packages
 ├── README.md                      # This document
-├── server.py                      # Flask web server to run the frontend application
+├── requirements.txt               # Required Python packages
+├── server.py                      # Flask web server to run the vanilla frontend
 ├── src/
 │   ├── audit.py                   # Advanced Agentic RAG Pipeline logic
 │   ├── compliance_checker/        # Core CLI and static analysis package
+│   │   ├── analyzer.py            # Core AI analysis and inference
+│   │   ├── pdf_rule_extractor.py  # Structured PDF rule extraction
+│   │   └── vector_store.py        # Vector database abstractions
 │   ├── rules_parser/              # Modules for parsing YAML and PDF rules
 │   └── semantic_chunker.py        # Tree-sitter powered code parser and chunker
 ├── tests/                         # Automated unit tests (Pytest)
 │   ├── test_hyde.py
+│   ├── test_pdf_rule_extractor.py
 │   └── test_semantic_chunker.py
-└── webapp/                        # Frontend UI assets (HTML, CSS, JS)
+├── webapp/                        # Frontend UI assets (HTML, CSS, JS)
+└── worker.py                      # Worker script for long-running processes
 ```
 
 ## MVP Assumptions & Constraints
