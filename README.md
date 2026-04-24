@@ -29,6 +29,7 @@ The tool orchestrates an end-to-end static audit pipeline:
 > **For a deep technical dive into the core pipelines and advanced RAG implementation, see [ARCHITECTURE.md](ARCHITECTURE.md).**
 > **For detailed documentation of the FastAPI endpoints, WebSocket real-time queues, and Pydantic AI schemas, see [docs-and-plans/API_AND_MODELS.md](docs-and-plans/API_AND_MODELS.md).**
 > **For a complete breakdown of modules, features, and external dependencies/libraries, see [docs-and-plans/MODULES_AND_DEPENDENCIES.md](docs-and-plans/MODULES_AND_DEPENDENCIES.md).**
+> **For an granular file-by-file purpose guide, see [docs-and-plans/FILE_BY_FILE_BREAKDOWN.md](docs-and-plans/FILE_BY_FILE_BREAKDOWN.md).**
 
 ```text
 software-tool/
