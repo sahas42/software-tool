@@ -196,9 +196,3 @@ Sending to Gemini for analysis ...
 Summary: The project breaks multiple rules including redistribution of raw data...
 ============================================================
 ```
-
-## Future Roadmap
-
-- [ ] **IDE Integration?:** Expose the tool as a VS Code extension to block bad commits in real-time?
-
-- [ ] **Auto-Compliance Check on Push:** Automatically run the compliance check on every push to the repository.
