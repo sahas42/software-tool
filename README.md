@@ -97,6 +97,10 @@ pip install -e ".[dev]"
 
 # Option B: Alternatively, if you just want to install the required packages without installing the compliance checker as a module
 pip install -r requirements.txt
+
+# 4. Start Infrastructure Services (Redis & Qdrant)
+# Required for Celery background tasks and Advanced RAG vector store
+docker-compose up -d
 ```
 
 ## Usage
@@ -133,14 +137,27 @@ python server.py
 Then, open your browser and navigate to `http://localhost:5001`. You can upload rule files (YAML/PDF) and analyze local files, ZIP archives, or GitHub repositories directly from the UI.
 
 ### Example 4: Modern Web Application (Next.js UI)
-A modern, advanced Agentic Scanner interface built with Next.js is also available. It connects to the Flask backend API.
+A modern, advanced Agentic Scanner interface built with Next.js is also available. It connects to the Flask backend API and relies on Celery for background processing.
 
-First, ensure the backend is running:
+1. Start infrastructural services (if not already running):
+```bash
+docker-compose up -d
+```
+
+2. Start the Celery Worker (in a separate terminal):
+```bash
+# On Windows (use pool=solo):
+celery -A celery_app.celery_app worker --loglevel=info --pool=solo
+# On macOS/Linux:
+# celery -A celery_app.celery_app worker --loglevel=info
+```
+
+3. Start the Flask Backend API (in another terminal):
 ```bash
 python server.py
 ```
 
-Then, in a separate terminal, install dependencies and start the Next.js frontend:
+4. Start the Next.js frontend (in another terminal):
 ```bash
 cd frontend
 npm install
