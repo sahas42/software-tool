@@ -4,11 +4,13 @@ An AI-driven compliance checker designed to audit codebases and detect dataset l
 
 ## Key Features
 
-- **Web Interface:** A user-friendly Flask-based UI for easy interaction without the command line.
+- **Modern Web Interface:** A highly interactive Next.js web application for managing audits, supplemented by a vanilla Flask API and UI.
 - **Versatile Code Input:** Analyze code via remote GitHub URLs, uploaded ZIP archives, multiple local file uploads, or entire directory folders.
-- **Flexible Rules Extraction:** Supply compliance rules via standard YAML configuration files, or automatically extract text directly from dataset PDF documents.
-- **Local & Remote Scanning:** Use the CLI to traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
-- **Advanced Agentic RAG & HyDE Generation:** An integrated targeted audit pipeline that chunks the codebase and uses a HyDE (Hypothetical Document Embeddings) sub-agent to dynamically synthesize mock-violating code snippets matching your rules. This bridges the semantic gap between legal language and actual source code for highly precise vector retrieval.
+- **LLM-Powered Rules Extraction:** Supply compliance rules via standard YAML configuration files, or use the advanced LLM-powered pipeline to structure and extract nuanced contextual usage rules directly from complex legal PDF documents (replacing naive text extraction).
+- **Asynchronous Processing:** Robust background task execution using Celery and Redis to handle long-running code analysis jobs efficiently without blocking the web interface.
+- **Local & Remote Scanning:** Traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
+- **Dockerized Infrastructure:** Simplified local deployment orchestration via Docker Compose incorporating Qdrant and Redis services out of the box.
+- **Advanced Agentic RAG & HyDE Generation:** An integrated targeted audit pipeline that chunks the codebase and uses a HyDE (Hypothetical Document Embeddings) sub-agent to dynamically synthesize mock-violating code snippets matching your rules. Powered by a local Vector database, this bridges the semantic gap between legal language and actual source code for highly precise vector retrieval.
 - **AI-Driven Analysis:** Leverages Google's Gemini 2.5 Flash model for context-aware static code analysis and precise violation detection.
 
 ## How It Works
