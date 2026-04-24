@@ -26,6 +26,8 @@ The tool orchestrates an end-to-end static audit pipeline:
 
 ## Current Architecture & Directory Structure
 
+> **For a deep technical dive into the compliance pipeline, rule ingestion, and advanced Agentic RAG implementation, see [ARCHITECTURE.md](ARCHITECTURE.md).**
+
 ```text
 software-tool/
 ├── .env                           # Local environment variables (GEMINI_API_KEY)
