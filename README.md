@@ -66,16 +66,16 @@ software-tool/
 └── worker.py                      # Worker script for long-running processes
 ```
 
-## MVP Assumptions & Constraints
+## System Capabilities & Trade-offs
 
-For this initial Minimal Viable Product roll-out, we made a few deliberate trade-offs to optimize for speed and demonstration value:
+The framework has been engineered to balance high-speed compliance inference with context complexity.
 
-1. **Context Window Limitations:** The tool assumes the aggregate codebase text easily fits within the model's token limit (Gemini 2.5 Flash natively supports up to 1M tokens). Very massive repositories might still hit this boundary.
-2. **AI Provider:** We are hardcoded to use the Google GenAI SDK and specifically target the `gemini-2.5-flash` model. We also assume the usage of the free tier API which imposes rate ceilings. To mitigate 429 errors, `analyzer.py` utilizes exponential backoff to handle rate limits gracefully.
-3. **Remote Parsing:** The integration of `gitingest` natively pulls `.gitignore` respected code. Ensure private repositories provide a `GITHUB_TOKEN` to gitingest via environment variables if used.
+1. **Large-Scale Inference:** By default, the Vanilla pipeline leverages the robust 1M-token context window of Google's `gemini-2.5-flash` model, allowing instantaneous analysis of most standard codebases. For enterprise-scale monoliths, users can toggle the **Advanced RAG Pipeline**, which maps code context into a local Vector Store (Qdrant) and handles bounds dynamically via HyDE sub-agents.
+2. **Rate Limit Handling:** When relying on free-tier Gemini API keys, extensive multi-chunk iterative querying via the Advanced RAG pipeline could brush against rate ceilings. To ensure stability, the backend utilizes exponential backoff to handle rate limits gracefully within background Celery tasks.
+3. **Private Repository Ingestion:** While `gitingest` operates seamlessly on public GitHub repositories by natively respecting `.gitignore` paths, running audits against private repositories requires explicitly injecting a `GITHUB_TOKEN` into the environment variables.
 
 > [!NOTE] 
-> **Current State of Development:** Both the "Vanilla" (full context window) and "Advanced RAG" (chunking, embedding, vector search, and HyDE sub-agent) pipelines are now fully integrated into the Web Application. Users can toggle between these modes and select their retrieval strategies directly from the UI.
+> Both the "Vanilla" (full context window) and "Advanced Agentic RAG" pipelines are natively toggleable within the web interface, empowering users to dynamically select between maximum speed (Vanilla) and precision at scale (RAG).
 
 ## Setup & Installation
 
