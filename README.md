@@ -26,7 +26,8 @@ The tool orchestrates an end-to-end static audit pipeline:
 
 ## Current Architecture & Directory Structure
 
-> **For a deep technical dive into the compliance pipeline, rule ingestion, and advanced Agentic RAG implementation, see [ARCHITECTURE.md](ARCHITECTURE.md).**
+> **For a deep technical dive into the core pipelines and advanced RAG implementation, see [ARCHITECTURE.md](ARCHITECTURE.md).**
+> **For detailed documentation of the FastAPI endpoints, WebSocket real-time queues, and Pydantic AI schemas, see [docs-and-plans/API_AND_MODELS.md](docs-and-plans/API_AND_MODELS.md).**
 
 ```text
 software-tool/
