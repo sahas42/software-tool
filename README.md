@@ -4,11 +4,13 @@ An AI-driven compliance checker designed to audit codebases and detect dataset l
 
 ## Key Features
 
-- **Web Interface:** A user-friendly Flask-based UI for easy interaction without the command line.
+- **Modern Web Interface:** A highly interactive Next.js web application for managing audits, supplemented by a vanilla Flask API and UI.
 - **Versatile Code Input:** Analyze code via remote GitHub URLs, uploaded ZIP archives, multiple local file uploads, or entire directory folders.
-- **Flexible Rules Extraction:** Supply compliance rules via standard YAML configuration files, or automatically extract text directly from dataset PDF documents.
-- **Local & Remote Scanning:** Use the CLI to traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
-- **Advanced Agentic RAG & HyDE Generation:** An integrated targeted audit pipeline that chunks the codebase and uses a HyDE (Hypothetical Document Embeddings) sub-agent to dynamically synthesize mock-violating code snippets matching your rules. This bridges the semantic gap between legal language and actual source code for highly precise vector retrieval.
+- **LLM-Powered Rules Extraction:** Supply compliance rules via standard YAML configuration files, or use the advanced LLM-powered pipeline to structure and extract nuanced contextual usage rules directly from complex legal PDF documents (replacing naive text extraction).
+- **Asynchronous Processing:** Robust background task execution using Celery and Redis to handle long-running code analysis jobs efficiently without blocking the web interface.
+- **Local & Remote Scanning:** Traverse local directories or dynamically fetch public GitHub repositories using `gitingest`.
+- **Dockerized Infrastructure:** Simplified local deployment orchestration via Docker Compose incorporating Qdrant and Redis services out of the box.
+- **Advanced Agentic RAG & HyDE Generation:** An integrated targeted audit pipeline that chunks the codebase and uses a HyDE (Hypothetical Document Embeddings) sub-agent to dynamically synthesize mock-violating code snippets matching your rules. Powered by a local Vector database, this bridges the semantic gap between legal language and actual source code for highly precise vector retrieval.
 - **AI-Driven Analysis:** Leverages Google's Gemini 2.5 Flash model for context-aware static code analysis and precise violation detection.
 
 ## How It Works
@@ -27,24 +29,36 @@ The tool orchestrates an end-to-end static audit pipeline:
 ```text
 software-tool/
 ├── .env                           # Local environment variables (GEMINI_API_KEY)
+├── backend/                       # Backend specific files
+├── celery_app.py                  # Celery app initialization for background tasks
+├── docker-compose.yml             # Docker composition for services
+├── docs-and-plans/                # Project planning and SRS documents
 ├── examples/                      # Fixtures and sample code for testing
 │   ├── rules.yaml                 # Sample constraints
 │   └── sample_project/            # Dummy ML project intentionally violating the rules
 ├── fetch_github.py                # Script to scrape code from public repositories
 ├── frontend/                      # Modern Next.js web application interface
+├── literature-review/             # SOTA review and research documents
+├── main.py                        # Main entry point script
+├── plan/                          # Legacy and current release plans
 ├── pyproject.toml                 # Package configuration and dependencies
-├── requirements.txt               # Required Python packages
 ├── README.md                      # This document
-├── server.py                      # Flask web server to run the frontend application
+├── requirements.txt               # Required Python packages
+├── server.py                      # Flask web server to run the vanilla frontend
 ├── src/
 │   ├── audit.py                   # Advanced Agentic RAG Pipeline logic
 │   ├── compliance_checker/        # Core CLI and static analysis package
+│   │   ├── analyzer.py            # Core AI analysis and inference
+│   │   ├── pdf_rule_extractor.py  # Structured PDF rule extraction
+│   │   └── vector_store.py        # Vector database abstractions
 │   ├── rules_parser/              # Modules for parsing YAML and PDF rules
 │   └── semantic_chunker.py        # Tree-sitter powered code parser and chunker
 ├── tests/                         # Automated unit tests (Pytest)
 │   ├── test_hyde.py
+│   ├── test_pdf_rule_extractor.py
 │   └── test_semantic_chunker.py
-└── webapp/                        # Frontend UI assets (HTML, CSS, JS)
+├── webapp/                        # Frontend UI assets (HTML, CSS, JS)
+└── worker.py                      # Worker script for long-running processes
 ```
 
 ## MVP Assumptions & Constraints
