@@ -37,3 +37,6 @@ class ComplianceReport(BaseModel):
     violations: list[Violation]
     summary: str
     is_compliant: bool
+
+class ViolationListWrapper(BaseModel):
+    items: list[Violation]

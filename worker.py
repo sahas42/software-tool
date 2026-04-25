@@ -1,8 +1,7 @@
 import os
-from typing import Optional
 from celery_app import celery_app
 from src.compliance_checker.models import UsageRules
-from src.audit import analyze_advanced
+
 
 @celery_app.task(bind=True, name="worker.analyze_codebase")
 def analyze_codebase_task(
@@ -10,8 +9,9 @@ def analyze_codebase_task(
     rules_dict: dict,
     codebase: dict,
     api_key: str,
+    pipeline_type: str = "vanilla",
     repo_id: str = "default_repo",
-    embed_model: str = "jina",
+    embed_model: str = "bge",
     use_hyde: bool = True
 ):
     """
@@ -19,36 +19,48 @@ def analyze_codebase_task(
     Sends progress state up to Redis for the WebSocket to consume.
     """
     def progress_reporter(progress: int, status_msg: str):
-        if self.is_aborted():  # Check if revoked
-            raise Exception("Task cancelled by user")
         self.update_state(state="PROGRESS", meta={"progress": progress, "status": status_msg})
 
     try:
-        if self.is_aborted():
-            raise Exception("Task cancelled by user")
-        
-        progress_reporter(5, "Task starting...")
-        
+        progress_reporter(5, "Task starting — loading AI models...")
+
         rules = UsageRules(**rules_dict)
-        
-        # We assume the codebase content mapping {filepath: content} is passed explicitly here
+
         if not codebase:
             progress_reporter(100, "Error: No source files found")
             return {"error": "No source files found."}
 
-        report = analyze_advanced(
-            rules=rules,
-            codebase=codebase,
-            api_key=api_key,
-            repo_id=rules.dataset.name,  # Use dataset name as a default repo context if none provided
-            embed_model=embed_model,
-            use_hyde=use_hyde,
-            progress_callback=progress_reporter
-        )
-        
+        if pipeline_type == "advanced":
+            # Import here to avoid circular/slow imports at worker startup
+            from src.audit import analyze_advanced
+            report = analyze_advanced(
+                rules=rules,
+                codebase=codebase,
+                api_key=api_key,
+                repo_id=repo_id,
+                embed_model=embed_model,
+                use_hyde=use_hyde,
+                progress_callback=progress_reporter
+            )
+        else:
+            from src.audit import analyze_vanilla
+            report = analyze_vanilla(
+                rules=rules,
+                codebase=codebase,
+                api_key=api_key,
+                progress_callback=progress_reporter
+            )
+
         progress_reporter(100, "Completed")
         return report.model_dump()
-        
+
     except Exception as e:
-        self.update_state(state="FAILURE", meta={"error": str(e), "status": "Task failed"})
-        raise e
+        # Store as plain string — raw exception objects cause Redis deserialization crashes
+        error_msg = str(e)
+        self.update_state(
+            state="FAILURE",
+            meta={"error": error_msg, "status": "Task failed", "exc_type": type(e).__name__, "exc_message": error_msg}
+        )
+        # Re-raise a plain RuntimeError so Celery doesn't try to serialize the original exception
+        raise RuntimeError(error_msg)
+

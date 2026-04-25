@@ -82,7 +82,7 @@ async def analyze_endpoint(
     codebase_files: Optional[List[UploadFile]] = File(None),
     rules_file: UploadFile = File(...),
     pipeline_type: str = Form("vanilla"),
-    embed_model: str = Form("jina"),
+    embed_model: str = Form("bge"),
     use_hyde: bool = Form(True)
 ):
     if not api_key:
@@ -111,7 +111,7 @@ async def analyze_endpoint(
         if codebase_type == "github":
             if not codebase_url:
                 return JSONResponse(status_code=400, content={"error": "GitHub URL is required."})
-            codebase = load_codebase(codebase_url)
+            codebase = await asyncio.to_thread(load_codebase, codebase_url)
         elif codebase_type == "zip":
             if not codebase_zip:
                 return JSONResponse(status_code=400, content={"error": "ZIP file is required."})
@@ -135,6 +135,7 @@ async def analyze_endpoint(
         rules_dict=rules.model_dump(),
         codebase=codebase,
         api_key=api_key,
+        pipeline_type=pipeline_type,
         repo_id=repo_id,
         embed_model=embed_model,
         use_hyde=use_hyde
@@ -175,13 +176,21 @@ async def websocket_status(websocket: WebSocket, task_id: str):
                 progress = 0
                 status_msg = res.state
 
+            # Robustly extract error info
+            error_val = None
+            if res.state == "FAILURE":
+                if isinstance(res.info, dict):
+                    error_val = res.info.get("error", str(res.result))
+                else:
+                    error_val = str(res.info) if res.info else str(res.result)
+
             await websocket.send_json({
                 "task_id": task_id,
                 "status": res.state,
                 "progress": progress,
                 "message": status_msg,
                 "result": res.result if res.state == "SUCCESS" else None,
-                "error": res.info.get("error", str(res.result)) if res.state == "FAILURE" else None
+                "error": error_val
             })
             
             if res.ready() or res.state == "REVOKED":

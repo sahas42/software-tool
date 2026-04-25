@@ -1,0 +1,22 @@
+dataset:
+  name: "Sample Restricted Datasets"
+  source: "Various"
+  license: "Custom Non-Commercial"
+  description: "A combination of restricted datasets like Enron and Getty Images for testing purposes."
+
+allowed_uses:
+  - "Academic research and statistical analysis."
+  - "Internal testing and development of non-commercial systems."
+
+barred_uses:
+  - "Do not train machine learning models on commercially restricted datasets, such as the 'Enron Email Dataset'."
+  - "Do not scrape images from domains associated with Getty Images or Shutterstock."
+
+conditions:
+  - "If using the 'Common Crawl' dataset, ensure that a cooldown period of 2 seconds is maintained between requests."
+
+attribution_requirements:
+  - "Any use of the 'IMDB Reviews' dataset must include a citation to the original authors."
+
+redistribution_terms:
+  - "Do not host raw dataset files on public file sharing networks."

@@ -1,0 +1,37 @@
+name: ACEP Compliance Audit
+
+on:
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  compliance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      # In a real environment, you'd host the backend somewhere and pass the URL to the CLI.
+      # For now, this is a skeleton showing how to run the CLI script in CI/CD.
+      - name: Download CLI
+        run: curl -O https://raw.githubusercontent.com/sahas42/software-tool/main/cli.py
+
+      - name: Run Agentic Compliance Audit
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ACEP_API_URL: ${{ secrets.ACEP_API_URL }} # e.g. https://acep.yourcompany.com
+        run: |
+          python cli.py --repo-url https://github.com/${{ github.repository }} \
+                        --rules-file path/to/your/rules.pdf \
+                        --pipeline advanced \
+                        --embed-model bge

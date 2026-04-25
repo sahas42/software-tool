@@ -13,6 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
 </head>
 
 <body>
@@ -300,13 +301,13 @@
               <p class="step-desc" style="margin-bottom: 10px;">Embedding model for vectorizing the codebase:</p>
               <div class="pipeline-options" style="display:flex; gap: 15px;">
                 <label class="pipeline-option" style="flex:1; padding: 12px 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
-                  <input type="radio" name="embed_model" value="jina" checked style="margin-right: 8px;">
-                  <strong>Jina Code v2 <span style="font-size:11px; font-weight:500; opacity:0.6;">(Default)</span></strong>
+                  <input type="radio" name="embed_model" value="jina" style="margin-right: 8px;">
+                  <strong>Jina Code v2</strong>
                   <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">jina-embeddings-v2-base-code · 8K context · code-aware NL↔code retrieval</div>
                 </label>
                 <label class="pipeline-option" style="flex:1; padding: 12px 15px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
-                  <input type="radio" name="embed_model" value="bge" style="margin-right: 8px;">
-                  <strong>BGE-small</strong>
+                  <input type="radio" name="embed_model" value="bge" checked style="margin-right: 8px;">
+                  <strong>BGE-small <span style="font-size:11px; font-weight:500; opacity:0.6;">(Default)</span></strong>
                   <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">bge-small-en-v1.5 · 512 token limit · lightweight fallback</div>
                 </label>
               </div>
@@ -405,6 +406,10 @@
             <div class="ls-dot"></div><span>Generating compliance report</span>
           </div>
         </div>
+        <div id="loading-status-text" style="text-align: center; color: var(--primary); font-weight: 500; margin-top: 20px; font-size: 15px;"></div>
+        <div style="text-align: center; margin-top: 24px;">
+          <button type="button" class="retry-btn" id="cancel-task-btn" style="background: transparent; border: 1px solid #dc2626; color: #dc2626; padding: 8px 16px;">Cancel Task</button>
+        </div>
       </div>
     </section>
 
@@ -444,6 +449,15 @@
       </div>
       <div class="report-summary-block" id="report-summary-block"></div>
       <div class="violations-container" id="violations-container"></div>
+      <div style="text-align: center; margin-top: 32px; margin-bottom: 32px;">
+        <button type="button" class="action-btn" id="bottom-new-audit-btn" style="background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); padding: 12px 24px; font-size: 1rem; margin: 0 auto;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to New Audit
+        </button>
+      </div>
     </section>
 
     <!-- Error -->
