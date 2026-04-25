@@ -180,24 +180,15 @@ python -m pytest tests/
 
 ### Example Output
 
-If violations are found, the system will trigger a non-zero exit code (`1`) and output a structured report:
+Once the asynchronous Celery analysis completes, the Web App elegantly renders an interactive **Compliance Report** displaying:
 
-```text
-Loading rules from examples\rules.yaml ...
-Scanning codebase at examples\sample_project ...
-  Found 1 file(s).
-Sending to Gemini for analysis ...
+1. **Overall Verdict:** A massive dynamically-colored banner rendering either `✅ COMPLIANT` or `❌ NON-COMPLIANT`.
+2. **Metrics & Severity Stats:** High-level count chips showcasing exactly how many `High`, `Medium`, or `Low` violations were surfaced by the LLM.
+3. **AI Analysis Summary:** A paragraph breaking down the LLM's comprehensive thesis regarding the codebase adherence to the restrictions.
+4. **Violation Cards:** Isolated cards displaying precisely where things went wrong:
+   - **File & Location:** The path and explicit line range (e.g., `train.py · lines 39-44`).
+   - **Triggered Rule:** The exact dataset constraint that was crossed.
+   - **Code Snippet:** The syntax breaking the rule.
+   - **Explanation:** The LLM's step-by-step reasoning explaining why the code matches the barred conditions.
 
-============================================================
-❌  NON-COMPLIANT — 3 violation(s) found.
-
-  [1] HIGH — Training models for generating malicious code or exploits
-      File: train.py  (lines 39)
-      Snippet: exploit_dataset = dataset.filter(lambda x: "vulnerability" in x["func_code_string"].lower())
-      Explanation: The code filters the dataset for vulnerabilities and proceeds to train a causal language model specifically to produce exploit code.
-
-  # ... (other violations)
-
-Summary: The project breaks multiple rules including redistribution of raw data...
-============================================================
-```
+You can also selectively download the structured JSON schema direct from the UI for external CICD processing or record-keeping.
