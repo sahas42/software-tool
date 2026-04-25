@@ -4,7 +4,7 @@ This document provides a comprehensive map of the project's ecosystem. It detail
 
 ---
 
-## 1. Frontend & User Interface Moduels
+## 1. Frontend & User Interface Models
 
 ### A. Modern Next.js Interface (`frontend/`)
 - **Features:**
