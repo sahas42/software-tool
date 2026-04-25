@@ -34,10 +34,15 @@ The tool orchestrates an end-to-end static audit pipeline:
 ```text
 software-tool/
 ├── .env                           # Local environment variables (GEMINI_API_KEY)
+├── ARCHITECTURE.md                # Core architecture & technical context
 ├── backend/                       # Backend specific files
 ├── celery_app.py                  # Celery app initialization for background tasks
 ├── docker-compose.yml             # Docker composition for services
-├── docs-and-plans/                # Project planning and SRS documents
+├── docs-and-plans/                # Detailed technical guides and SRS documents
+│   ├── API_AND_MODELS.md          # Comprehensive breakdown of endpoints & schemas
+│   ├── FILE_BY_FILE_BREAKDOWN.md  # Detailed overview of each script's purpose
+│   ├── FLASK_INTEGRATION_REPORT.md# Matrix identifying legacy app dependencies
+│   └── MODULES_AND_DEPENDENCIES.md# Breakdown of core modules & frameworks
 ├── examples/                      # Fixtures and sample code for testing
 │   ├── rules.yaml                 # Sample constraints
 │   └── sample_project/            # Dummy ML project intentionally violating the rules
@@ -62,6 +67,7 @@ software-tool/
 │   ├── test_hyde.py
 │   ├── test_pdf_rule_extractor.py
 │   └── test_semantic_chunker.py
+├── verify_acep.py                 # Dry-run diagnostic test script for the pipeline
 ├── webapp/                        # Frontend UI assets (HTML, CSS, JS)
 └── worker.py                      # Worker script for long-running processes
 ```
