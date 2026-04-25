@@ -101,8 +101,9 @@ pip install -e ".[dev]"
 # Option B: Alternatively, if you just want to install the required packages without installing the compliance checker as a module
 pip install -r requirements.txt
 
-# 4. Start Infrastructure Services (Redis & Qdrant)
-# Required for Celery background tasks and Advanced RAG vector store
+# 4. Start Infrastructure Services (Docker Compose) - *OPTIONAL*
+# Required ONLY if you want to run the Modern Next.js interface with Celery background tasks.
+# The legacy Vanilla UI (server.py) bypasses Celery and uses an in-memory Vector store.
 docker-compose up -d
 ```
 
@@ -134,7 +135,7 @@ python -m compliance_checker --rules examples/rules.yaml --codebase https://gith
 ```
 
 ### Example 3: Web Application (Vanilla UI)
-A basic Flask-based web interface is available for easier interaction:
+A basic Flask-based web interface is available for easier interaction. **This mode does not require Docker, Celery, or Redis.** It executes tasks synchronously and natively spins up the Qdrant Vector database entirely in machine memory.
 
 ```bash
 python server.py
