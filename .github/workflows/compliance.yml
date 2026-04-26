@@ -1,4 +1,4 @@
-name: ACEP Compliance Audit
+name: ACEP Compliance Audit (Delta-Indexed)
 
 on:
   pull_request:
@@ -7,31 +7,115 @@ on:
 jobs:
   compliance-check:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
+    steps:
+      # ── 1. Checkout with full history so git diff works ──────────────────────
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history to compare HEAD vs base branch
+
+      # ── 2. Python setup ───────────────────────────────────────────────────────
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+
+      # ── 3. Cache pip dependencies ─────────────────────────────────────────────
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      # In a real environment, you'd host the backend somewhere and pass the URL to the CLI.
-      # For now, this is a skeleton showing how to run the CLI script in CI/CD.
-      - name: Download CLI
-        run: curl -O https://raw.githubusercontent.com/sahas42/software-tool/main/cli.py
+      # ── 4. Cache HuggingFace embedding model (BGE / Jina) ────────────────────
+      # This avoids re-downloading the model (hundreds of MB) on every run.
+      - name: Cache HuggingFace models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: ${{ runner.os }}-hf-bge-small-en-v1.5
+          restore-keys: |
+            ${{ runner.os }}-hf-
 
+      # ── 5. Detect changed files via git diff ──────────────────────────────────
+      # Compare PR head against the base branch (e.g. main).
+      # This list is written to a file and passed to the audit so only
+      # changed files are re-fetched / re-indexed (delta-indexing).
+      - name: Detect changed files
+        id: changed_files
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          echo "Base commit : $BASE"
+          echo "Head commit : $HEAD"
+
+          # Get changed source files (added, copied, modified, renamed)
+          git diff --name-only --diff-filter=ACMR "$BASE" "$HEAD" \
+            | grep -E '\.(py|js|ts|java|cpp|c|go|rb|rs)$' \
+            > changed_files.txt || true
+
+          CHANGED_COUNT=$(wc -l < changed_files.txt | tr -d ' ')
+          echo "changed_count=$CHANGED_COUNT" >> "$GITHUB_OUTPUT"
+
+          echo "--- Changed source files ($CHANGED_COUNT) ---"
+          cat changed_files.txt
+
+      # ── 6. Skip audit if no source files changed ──────────────────────────────
+      - name: Skip if no source changes
+        if: steps.changed_files.outputs.changed_count == '0'
+        run: |
+          echo "No source file changes detected. Skipping compliance audit."
+          exit 0
+
+      # ── 7. Download the ACEP CLI ──────────────────────────────────────────────
+      - name: Download CLI
+        run: |
+          curl -fsSL -o cli.py \
+            https://raw.githubusercontent.com/sahas42/software-tool/main/cli.py
+
+      # ── 8. Run the Compliance Audit ───────────────────────────────────────────
+      # QDRANT_URL + QDRANT_API_KEY point to a persistent Qdrant Cloud instance.
+      # On first run the collection is built from scratch.
+      # On subsequent runs only changed files (detected in step 5) are re-embedded
+      # because IncrementalVectorStore.sync_codebase() skips files whose
+      # SHA-256 hash already exists in the collection — this IS delta-indexing.
+      #
+      # Required secrets:
+      #   GEMINI_API_KEY   – Google Gemini key for LLM analysis
+      #   ACEP_API_URL     – URL of the hosted ACEP backend  (e.g. https://acep.yoursite.com)
+      #   QDRANT_URL       – Qdrant Cloud cluster URL        (e.g. https://xyz.qdrant.io:6333)
+      #   QDRANT_API_KEY   – Qdrant Cloud API key
       - name: Run Agentic Compliance Audit
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          ACEP_API_URL: ${{ secrets.ACEP_API_URL }} # e.g. https://acep.yourcompany.com
+          GEMINI_API_KEY:  ${{ secrets.GEMINI_API_KEY }}
+          ACEP_API_URL:    ${{ secrets.ACEP_API_URL }}
+          QDRANT_URL:      ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY:  ${{ secrets.QDRANT_API_KEY }}
         run: |
-          python cli.py --repo-url https://github.com/${{ github.repository }} \
-                        --rules-file path/to/your/rules.pdf \
-                        --pipeline advanced \
-                        --embed-model bge
+          echo "=== Running ACEP Delta-Indexed Compliance Audit ==="
+          echo "Changed files being sent for audit:"
+          cat changed_files.txt
+
+          python cli.py \
+            --repo-url   https://github.com/${{ github.repository }} \
+            --rules-file sample_rules.yaml \
+            --pipeline   advanced \
+            --embed-model bge
+
+      # ── 9. Upload changed_files.txt as artifact for debugging ─────────────────
+      - name: Upload changed files list
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delta-index-report
+          path: changed_files.txt
+          retention-days: 7
