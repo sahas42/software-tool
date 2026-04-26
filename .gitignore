@@ -41,6 +41,7 @@ ENV/
 
 # Project Specific
 fetched_content/
+plan/
 qdrant_data/
 qdrant_storage/
 .pytest_cache/
