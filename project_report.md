@@ -158,6 +158,50 @@ During the second half of the course, **GitHub Issues** were actively utilized f
   management, repo listing API, and an authenticated GitHub REST API private repo loader.
 *My weekly breakdown is available in the Weekly Analysis Report.*
 
+### Subalaxmi NB
+
+**Overall Contributions:**
+
+- **RAG Pipeline Optimization (Relevance-Aware Indexing):**
+  Identified a major inefficiency in the pipeline where the entire codebase was being embedded without filtering, leading to noise and poor retrieval accuracy. Designed and implemented a relevance-aware indexing mechanism to address this.
+
+- **Rule-Guided Filtering Mechanism:**
+  Implemented logic to extract key terms from compliance rules and evaluate file relevance:
+  - Developed `_extract_relevance_terms()` to derive important keywords from rules
+  - Built `_score_text()` to compute relevance between rule terms and code files
+  - Introduced threshold-based filtering (score > 0) to include only relevant files
+
+- **Vector Database Optimization:**
+  Integrated filtering into `rules_vector_db.py` to:
+  - Reduce unnecessary embeddings
+  - Improve semantic search quality
+  - Lower computational overhead
+
+- **Pipeline Integration:**
+  Ensured compatibility with the full pipeline:
+  - GitHub ingestion (`fetch_github.py`)
+  - Vector storage (`rules_vector_db.py`)
+  - Audit pipeline (`audit.py`)
+
+- **Robustness & Edge Case Handling:**
+  Handled cases such as:
+  - Missing or empty rule inputs
+  - Unreadable files
+  - Low-relevance repositories
+
+- **Logging & Debugging:**
+  Added logging to track:
+  - File relevance scores
+  - Filtering decisions
+  - Pipeline behavior for debugging
+
+- **End-to-End Testing:**
+  Tested the full pipeline and validated:
+  - Improved retrieval accuracy
+  - Reduced noise in vector database
+  - More efficient compliance detection
+
+
 # Weekly Work Summary
 
 ## Core Architecture
@@ -239,6 +283,16 @@ detailed work done per week was clearly mentioned in the wsl sheet.
 - Code was generated using AI under my complete guidance — I defined the architecture,
   flow, and requirements, and directed the AI throughout the implementation.
 - I take full accountability for all code generated with AI assistance.
+
+### Subalaxmi N B
+
+- AI tools like ChatGPT and Gemini were used mainly to understand concepts related to RAG pipelines, relevance filtering, and vector databases.
+- Initial ideas and basic code structures for parts such as keyword extraction from rules and file relevance scoring were explored with AI, and then modified and integrated based on project needs.
+- The approach of filtering only relevant files instead of indexing the entire codebase was identified during development, with AI used only as a support tool during implementation.
+- All code was tested and verified to ensure correct behavior and smooth integration with the existing pipeline.
+- Full responsibility is taken for the contributed code and implemented logic.
+
+
 ## 8. PROMPTS
 
 ### Sahasvat
@@ -260,6 +314,10 @@ Please find the link to my chats here: https://drive.google.com/drive/folders/1i
   additionally, another chat in antigravity got deleted automatically due to a bug.
 ### Sai Rohith
 find my chats here:https://drive.google.com/drive/folders/1aWigMFPEwmQsxvGnAfaaiWG48r0rTdOw?usp=sharing
+
+### Subalaxmi NB
+You can find my impactful prompts and results here :
+https://docs.google.com/document/d/1Xc10XLuKVUDbN8j2ExQ1fPkZo1eycx38L9IqIXiiTNA/edit?usp=sharing
 
 ## 9. PROJECT DOCUMENTATION
 
