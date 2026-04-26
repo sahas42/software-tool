@@ -127,5 +127,3 @@ flowchart TD
 - [Flask Integration Report](https://github.com/sahas42/software-tool/blob/main/docs-and-plans/FLASK_INTEGRATION_REPORT.md)
 - [Modules & Dependencies](https://github.com/sahas42/software-tool/blob/main/docs-and-plans/MODULES_AND_DEPENDENCIES.md)
 - [SOTA Code Embedding Models Report](https://github.com/sahas42/software-tool/blob/main/literature-review/SOTA_Code_Embedding_Models_Report.md)
-- [Release 2 Plan](https://github.com/sahas42/software-tool/blob/main/plan/release2-plan.md)
-- [Legacy Phase 2 Plan](https://github.com/sahas42/software-tool/blob/main/plan/legacy/phase-2-plan.md)
