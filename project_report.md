@@ -81,40 +81,26 @@ flowchart TD
 
 ## 7. AI USAGE DECLARATION
 
-*Every team member must clearly declare what parts of the project code were written manually and what were generated or assisted by AI tools. This is not a penalty — it is a transparency requirement. Declaring your AI usage honestly is itself a learning outcome, it builds the habit of responsible, traceable AI-assisted engineering.*
+### Sahasvat
 
-| Module / Component | Authoring Method (Manual/AI/Mix) | AI Tool Used (if applicable) | Prompt / Source Details |
-| :--- | :--- | :--- | :--- |
-| [e.g., Codebase Ingestion] | [e.g., Mix] | [e.g., Cursor] | [e.g., "Write a python script to recursively filter and read all .py files..."] |
-| [e.g., Next.js UI Frontend] | [e.g., AI-Generated] | [e.g., v0.dev] | [e.g., "Create a dark-mode dashboard to upload files with a progress bar..."] |
-| [e.g., AST Semantic Chunker] | [e.g., Manual] | N/A | [e.g., Team discussion and Tree-sitter documentation] |
+- **Architecture & Planning:** I manually defined most of the system design, using AI purely to validate and refine my instincts.
+- **Code Generation:** Code was scaffolded using generative AI via strictly orchestrated, detailed prompts.
+- **Quality Assurance:** Every line of my AI-crafted code was rigorously reviewed to prevent and fix unintended behavior.
+- **Research:** Leveraged LLMs to break down and understand unfamiliar code snippets.
 
-***Note for mixed content:*** *Describe what AI produced and what you changed or added on top of it. (e.g., "AI generated the base boilerplate, I added the error handling and custom Pydantic schemas.")*
+*My workflow reflects responsible AI usage: automating boilerplate to focus on high-level engineering, rather than blindly relying on AI outputs.*
+
+
+### Prathamesh
 
 
 ## 8. PROMPTS
 
-*This section is a mandatory and distinctive requirement of this lab. Your team must document all AI prompts used during the ideation, research, planning, and development phases of Release 1. Documenting prompts builds a traceable, reproducible record of how AI assisted your engineering process.*
+### Sahasvat
 
-**Prompt 1**
-- **Tool:** [Name of the AI tool used, e.g., ChatGPT, Copilot]
-- **Prompt:** "[The exact prompt text submitted]"
-- **Purpose:** [What this prompt was intended to achieve]
-- **Outcome:** [Whether the output was useful, partially used, or discarded]
+Please find links to my chats here: https://drive.google.com/drive/folders/1iPlRRQo2XlbHTwvBJRHeUMXurdeWuAvA?usp=sharing 
 
-**Prompt 2**
-- **Tool:** [Name of the AI tool used]
-- **Prompt:** "[The exact prompt text submitted]"
-- **Purpose:** [What this prompt was intended to achieve]
-- **Outcome:** [Whether the output was useful, partially used, or discarded]
-
-**Prompt 3**
-- **Tool:** [Name of the AI tool used]
-- **Prompt:** "[The exact prompt text submitted]"
-- **Purpose:** [What this prompt was intended to achieve]
-- **Outcome:** [Whether the output was useful, partially used, or discarded]
-
-*(Copy and paste the above block for additional prompts as needed)*
+### Prathamesh
 
 ## 9. PROJECT DOCUMENTATION
 
