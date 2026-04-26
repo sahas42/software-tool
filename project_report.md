@@ -89,7 +89,24 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 
 ### Prathamesh
 
+- **Architectural Design & Strategy**:
+    - **High-Level Design (HLD)**: I authored the initial HLD and utilized Mermaid to visualize the data flow, providing a blueprint for the entire team.
+    - **Strategic Planning**: I led the decision to shift toward open-source Hugging Face models and specialized code-embedding tools to overcome token limits and cost constraints associated with proprietary APIs.
+    - **Workflow Definitions**: I established the process for handling dataset rules, moving from static files to a dynamic system that converts PDF licenses into searchable vector bases.
 
+- **Infrastructure and Data Persistence**:
+    - **Vector Database Migration**:I spearheaded the migration from ChromaDB to Qdrant. This moved the project from an in-memory setup to a managed, distributed database, ensuring data persists across server restarts.
+    - **Incremental Indexing Engine**:I developed the IncrementalVectorStore class using SHA-256 hashing. This logic ensures the system only embeds new or modified files, drastically reducing processing time and computational waste for subsequent audits.
+    - **Environment Management**:I managed the dependency lifecycle, updating configuration files to support the transition to distributed vector clients.
+
+- **COre Logic and Refactoring**:
+    - **Pipeline Optimization**: I refactored the analyze_advanced core logic to support repo_id tracking, allowing the system to maintain distinct, persistent collections for different GitHub repositories.
+    - **Unified Utilities**: I migrated standalone scripts, such as the rules parser, to the Qdrant backend to ensure architectural consistency across the entire ecosystem.
+
+- **Technical Review and Research**:
+     **Advanced Implementation**: I moved from studying fundamental RAG concepts to implementing complex features like similarity metrics and distributed database management.
+
+*My weekly breakdown is available in the Weekly Analysis Report.*
 
 ## 7. AI USAGE DECLARATION
 
@@ -105,6 +122,10 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 
 ### Prathamesh
 
+- I used AI somewhat to create a basic structure of code and then modified it with my taste like the embedding model which was used, the text chunking spilt size, the type of vector base used to store, etc…
+- I referred to GPT and Gemini to help in some places where I was stuck.
+- I take the full accountability for the code generated through me using LLMs. 
+
 
 ## 8. PROMPTS
 
@@ -113,6 +134,12 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 Please find links to my chats here: https://drive.google.com/drive/folders/1iPlRRQo2XlbHTwvBJRHeUMXurdeWuAvA?usp=sharing 
 
 ### Prathamesh
+
+*I have included the major prompts which reflects the overall and most relevant use of LLMs in the project from my part:*
+- https://gemini.google.com/share/f9a86c06bf12 
+- https://gemini.google.com/share/5bd0ee644345 
+- https://chatgpt.com/share/69b9068a-a52c-8009-b927-63931c56a6fe
+
 
 ## 9. PROJECT DOCUMENTATION
 
