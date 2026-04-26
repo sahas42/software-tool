@@ -179,8 +179,8 @@ detailed work done per week was clearly mentioned in the wsl sheet.
 - I take the full accountability for the code generated through me using LLMs.
 
 ### Vinay Sai
--I used ai to kind of make a quick prototype of what i was thinking and i tried to improve it step by step . architecture, design and flow was clearly mentioned to the ai and code generation was done by ai.(antigrvity)
--Design ideas and unknown technologies , terminologies were carefully reasearched by me through chatgpt or gemini.
+- I used ai to kind of make a quick prototype of what i was thinking and i tried to improve it step by step . architecture, design and flow was clearly mentioned to the ai and code generation was done by ai.(antigrvity)
+- Design ideas and unknown technologies , terminologies were carefully reasearched by me through chatgpt or gemini.
 - I take the full accountability for the code generated through me using LLMs.
 
 
@@ -199,8 +199,8 @@ Please find links to my chats here: https://drive.google.com/drive/folders/1iPlR
 
   ### Vinay sai
   *These are my chats with antigravity:
-  -https://gist.github.com/VinaySai-GH/74e2193c3e9096b2efe0baa44b977c59
-  -https://gist.github.com/VinaySai-GH/f9b788c73730284a2b6f23bf509056e7
+  - https://gist.github.com/VinaySai-GH/74e2193c3e9096b2efe0baa44b977c59
+  - https://gist.github.com/VinaySai-GH/f9b788c73730284a2b6f23bf509056e7
   
   additionally, another chat in antigravity got deleted automatically due to a bug.
 
