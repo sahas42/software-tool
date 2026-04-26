@@ -70,20 +70,21 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 **Overall Contributions:**
 - **Core Architecture & Agentic RAG:** Authored initial modular MVP (Gemini, CLI, Pydantic). Developed the Advanced Agentic RAG Pipeline with a HyDE (Hypothetical Document Embeddings) sub-agent strategy to dramatically enhance semantic vector retrieval accuracy.
 - **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive text splitters with structurally meaningful code chunk boundaries.
-- **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing a complex, multi-branch architectural merge—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch.
+- **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing a complex, multi-branch architectural merge—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch. Reviewed and merged multiple other PRs.
 - **Pipeline Extensibility:** Shipped structural support for mapping remote GitHub repositories directly into the pipeline context. Exclusively authored the advanced PDF rule analyzer leveraging LLMs to isolate complex legal clauses visually outperforming standard text extractors.
 - **Research & Project Coordination:** Evaluated 12+ embedding models through robust literature reviews. Handled task allocations via GitHub issues, executed core cross-branch code reviews, curated the Prompt history DB, formulated structural system diagrams, and spearheaded/primary lead the core project deliverables:
   - **Release 2 Project Proposal & SRS v2 (sole author):** Formalized the complete system blueprints and deployment boundaries.
-  - **Phase 1 & Release 2 Project Reports:** Consolidated designs and weekly progressions into submission documents.
+  - **Phase 1 & Release 2 Project Reports (sole author of common parts of latter):** Consolidated designs and weekly progressions into submission documents.
   - **Phase 2 Timeline and Goals (sole creator)**
   - **Codebase Architecture Documentation:** Overhauled infrastructure docs to accurately depict 50+ architectural commits.
   - **Proposal for Phase 1**
   - **Infeasibility report for initial cryptographic approach**
   - **Slide deck creation for demo**
-- **Further coordination:** Also organized multiple team meets to dicuss project progress, and conveyed meeting minutes to students who skipped meetings.
+- **Further coordination:** -
+  - Organized multiple team meets to discuss project progress and next steps, and conveyed meeting minutes to students who skipped meetings.
   
 
-**Weekly Task Breakdown:**
+**Weekly Task Breakdown (More in-depth contributions):**
 - **03/03:** Engineered the initial CLI MVP (Gemini + Pydantic) with mock datasets. Analyzed research literature resolving project novelty. Formalized the core RAG strategy and ideated the VS Code extension concept.
 - **10/03:** Finalized a 9-hour certification in RAG architecture. Configured initial `gitingest` and PyPDF integration frameworks. Shipped the first set of functional features enabling remote GitHub repository scraping and analysis.
 - **17/03:** Standardized `pyproject.toml` dependencies. Drafted codebase local caching with robust metadata tracking. Championed transition towards code-specific chunking and embedding models over plain-text. Initiated bridging the RAG chain functionally into the web application scope.
