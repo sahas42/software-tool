@@ -60,22 +60,33 @@ flowchart TD
 - **AI / ML:** Google Gemini 2.5 Flash via API (for extraction, reasoning, and context-aware static code analysis); Tree-sitter for semantic abstract syntax tree (AST) codebase chunking; Jina/BGE equivalent variants for text embedding.
 - **DevOps / Collaboration:** Docker and Docker Compose for infrastructure orchestration and seamless local provisioning; Git/GitHub for version control.
 
-## 6. TEAM ROLES
+## 6. CONTRIBUTIONS
 
-*Clearly define the role and responsibilities of each team member. Every member must have a distinct, meaningful contribution to the project. Generic or overlapping roles are not acceptable. Each member must also list the specific tasks they personally completed for Release 1 — not just their role title. Contributions must be verifiable through GitHub commits or task logs.*
+### Sahasvat
 
-- **Member Name:** [Insert Name 1]
-  - **Role Title:** [Insert Role]
-  - **Specific Responsibilities:** [Detail specific responsibilities here]
+**Overall Contributions:**
+- **Core Architecture & Agentic RAG:** Sole author of the initial modular MVP (using Gemini, CLI, and Pydantic schemas). Designed and implemented the Advanced Agentic RAG Pipeline with a HyDE (Hypothetical Document Embeddings) sub-agent strategy to dramatically enhance semantic vector retrieval accuracy.
+- **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive character splitters with structurally meaningful code chunk boundaries (functions, classes).
+- **Rule Extraction:** Developed an advanced PDF rule analyzer to extract multifaceted, complex legal compliance clauses precisely via LLMs.
+- **Input Ingestion & Pipeline Delivery:** Enabled remote repository compliance audits by integrating `gitingest`. Successfully exposed both the vanilla and RAG pipelines to the web application interface.
+- **Research & Project Coordination:** Executed rigorous literature reviews evaluating 12+ embedding models. Drove project momentum by structuring tasks via GitHub issues and conducting comprehensive cross-team code reviews. To establish the system design, I also spearheaded the following core project deliverables:
+  - **Release 2 System Requirements Specification (SRS v2):** Detailed system constraints, models, and pipeline transitions.
+  - **Release 2 Project Proposal:** Formally defined the new architecture and integration boundaries based on instructor feedback.
+  - **Phase 1 Submission Report:** Consolidated initial designs and workflows into a formal coursework report.
+  - **Codebase Architecture Documentation:** Overhauled project setup documentation to precisely reflect the last 50+ backend commits.
+  - **Project Presentation Slide Deck:** Authored core architectural slides and provided feedback to unify the presentation.
 
-- **Member Name:** [Insert Name 2]
-  - **Role Title:** [Insert Role]
-  - **Specific Responsibilities:** [Detail specific responsibilities here]
+**Weekly Task Breakdown:**
+- **03/03:** Built the bare-minimal functional MVP CLI tool using Gemini and Pydantic. Reviewed literature to validate project novelty, and formally proposed the RAG architecture solution.
+- **10/03:** Up-skilled via a 9-hour RAG certification. Authored the initial architectural draft leveraging `gitingest` and PyPDF. Shipped code for analyzing remote GitHub repositories rather than just local directories.
+- **17/03:** Shipped codebase download logic for repositories. Outlined the RAG strategy transition, explicitly championing AST/code-specific chunking models over generic language chunkers. Standardized project dependencies.
+- **24/03:** Wired the Vanilla Gemini-Pydantic pipeline alongside the iterative RAG pipeline to the initial frontend web interface. Authored the Phase 1 Submission Report.
+- **31/03:** Split workloads strategically via GitHub issues. Conducted an extensive literature review (5+ papers, 12+ models) to isolate the most optimal code embedding models. Integrated the selected embedding models natively into the pipeline, complete with a UI toggle.
+- **07/04:** Delivered 8 critical commits launching two major infrastructural modules: **1.** The HyDE Sub-agent (including backend logic, tests, and UI toggles). **2.** Tree-sitter Semantic Chunking logic for rigorous code segmentation. Also prepared the final project presentation slide deck.
+- **14/04:** Reviewed and validated backend Redis/Celery changes. Exclusively authored a major structural Proposal rewrite for Release 2 based on instructor feedback. Exclusively drafted the System Requirements Specification (SRS) mapping out Release 2.
+- **21/04:** Commenced and finished the advanced PDF rule analyzer module. Merged the Celery/Redis asynchronous workers to `main`. Overhauled project documentation mapping 50+ commits, compiled prompt histories for grading transparency, and generated the formal Release 2 Project Report.
 
-
-- **Member Name:** [Insert Name 3]
-  - **Role Title:** [Insert Role]
-  - **Specific Responsibilities:** [Detail specific responsibilities here]
+### Prathamesh
 
 
 
