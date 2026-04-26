@@ -115,3 +115,17 @@ flowchart TD
 - **Outcome:** [Whether the output was useful, partially used, or discarded]
 
 *(Copy and paste the above block for additional prompts as needed)*
+
+## 9. PROJECT DOCUMENTATION
+
+*For comprehensive technical specifications, API schemas, design decisions, and system blueprints, please refer to the global documentation files housed within the project repository:*
+
+- [Main Project README](https://github.com/sahas42/software-tool/blob/main/README.md)
+- [System Architecture](https://github.com/sahas42/software-tool/blob/main/ARCHITECTURE.md)
+- [API & Models Requirements](https://github.com/sahas42/software-tool/blob/main/docs-and-plans/API_AND_MODELS.md)
+- [File-by-File Breakdown](https://github.com/sahas42/software-tool/blob/main/docs-and-plans/FILE_BY_FILE_BREAKDOWN.md)
+- [Flask Integration Report](https://github.com/sahas42/software-tool/blob/main/docs-and-plans/FLASK_INTEGRATION_REPORT.md)
+- [Modules & Dependencies](https://github.com/sahas42/software-tool/blob/main/docs-and-plans/MODULES_AND_DEPENDENCIES.md)
+- [SOTA Code Embedding Models Report](https://github.com/sahas42/software-tool/blob/main/literature-review/SOTA_Code_Embedding_Models_Report.md)
+- [Release 2 Plan](https://github.com/sahas42/software-tool/blob/main/plan/release2-plan.md)
+- [Legacy Phase 2 Plan](https://github.com/sahas42/software-tool/blob/main/plan/legacy/phase-2-plan.md)
