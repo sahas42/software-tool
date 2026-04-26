@@ -156,7 +156,7 @@ During the second half of the course, **GitHub Issues** were actively utilized f
   GitHub OAuth integration enabling users to authorize the platform to scan their
   private repositories seamlessly — including backend OAuth routes, signed session
   management, repo listing API, and an authenticated GitHub REST API private repo loader.
-
+*My weekly breakdown is available in the Weekly Analysis Report.*
 
 # Weekly Work Summary
 
@@ -231,7 +231,14 @@ detailed work done per week was clearly mentioned in the wsl sheet.
 - Design ideas and unknown technologies , terminologies were carefully reasearched by me through chatgpt or gemini.
 - I take the full accountability for the code generated through me using LLMs.
 
-
+### Sai Rohith
+### Sai Rohith
+- I used AI to verify my architectural decisions and surface potential issues
+  before implementation — helping me validate design choices like the HyDE approach,
+  the Celery/Redis task flow, and the delta-indexing CI/CD strategy.
+- Code was generated using AI under my complete guidance — I defined the architecture,
+  flow, and requirements, and directed the AI throughout the implementation.
+- I take full accountability for all code generated with AI assistance.
 ## 8. PROMPTS
 
 ### Sahasvat
@@ -251,8 +258,8 @@ Please find the link to my chats here: https://drive.google.com/drive/folders/1i
   - https://gist.github.com/VinaySai-GH/f9b788c73730284a2b6f23bf509056e7
   
   additionally, another chat in antigravity got deleted automatically due to a bug.
-
-
+### Sai Rohith
+find my chats here:https://drive.google.com/drive/folders/1aWigMFPEwmQsxvGnAfaaiWG48r0rTdOw?usp=sharing
 
 ## 9. PROJECT DOCUMENTATION
 
