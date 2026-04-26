@@ -140,6 +140,13 @@ Please find links to my chats here: https://drive.google.com/drive/folders/1iPlR
 - https://gemini.google.com/share/5bd0ee644345 
 - https://chatgpt.com/share/69b9068a-a52c-8009-b927-63931c56a6fe
 
+  ### Vinay sai
+  These are my chats with antigravity:
+  -https://gist.github.com/VinaySai-GH/74e2193c3e9096b2efe0baa44b977c59
+  -https://gist.github.com/VinaySai-GH/f9b788c73730284a2b6f23bf509056e7
+  additionally, another chat in antigravity got deleted due to a bug
+
+
 
 ## 9. PROJECT DOCUMENTATION
 
