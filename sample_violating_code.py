@@ -43,3 +43,5 @@ def process_crawl_data():
         # VIOLATION: Sending requests back-to-back without the required time.sleep(2)
         data = requests.get(url)
         print(f"Processed {url}: {data.status_code}")
+
+# ci delta-index test
