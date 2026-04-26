@@ -195,7 +195,7 @@ detailed work done per week was clearly mentioned in the wsl sheet.
 
 ### Sahasvat
 
-Please find links to my chats here: https://drive.google.com/drive/folders/1iPlRRQo2XlbHTwvBJRHeUMXurdeWuAvA?usp=sharing 
+Please find the link to my chats here: https://drive.google.com/drive/folders/1iPlRRQo2XlbHTwvBJRHeUMXurdeWuAvA?usp=sharing 
 
 ### Prathamesh
 
