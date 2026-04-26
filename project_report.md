@@ -67,9 +67,9 @@ flowchart TD
 **Overall Contributions:**
 - **Core Architecture & Agentic RAG:** Authored initial modular MVP (Gemini, CLI, Pydantic). Developed the Advanced Agentic RAG Pipeline with a HyDE (Hypothetical Document Embeddings) sub-agent strategy to dramatically enhance semantic vector retrieval accuracy.
 - **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive text splitters with structurally meaningful code chunk boundaries.
-- **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing complex, multi-branch architectural merges—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch, and merging the massive async Redis/Celery worker architecture securely into `main`.
+- **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing a complex, multi-branch architectural merge—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch.
 - **Pipeline Extensibility:** Shipped structural support for mapping remote GitHub repositories directly into the pipeline context. Exclusively authored the advanced PDF rule analyzer leveraging LLMs to isolate complex legal clauses visually outperforming standard text extractors.
-- **Research & Project Coordination:** Evaluated 12+ embedding models through robust literature reviews. Handled task allocations via GitHub issues, executed core cross-branch code reviews, curated the Prompt history DB, formulated all major structural system diagrams, and spearheaded the core project deliverables:
+- **Research & Project Coordination:** Evaluated 12+ embedding models through robust literature reviews. Handled task allocations via GitHub issues, executed core cross-branch code reviews, curated the Prompt history DB, formulated structural system diagrams, and spearheaded the core project deliverables:
   - **Release 2 Project Proposal & SRS v2:** Formalized the complete system blueprints and deployment boundaries.
   - **Phase 1 & Release 2 Project Reports:** Consolidated designs and weekly progressions into submission documents.
   - **Codebase Architecture Documentation:** Overhauled infrastructure docs to accurately depict 50+ architectural commits.
