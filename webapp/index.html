@@ -185,16 +185,103 @@
             <!-- Tab panels -->
             <!-- GitHub -->
             <div class="tab-panel active" id="panel-github">
-              <div class="input-group">
-                <div class="input-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+
+              <!-- Auth error banner (shown on OAuth failure) -->
+              <div id="github-auth-error" style="display:none; background:rgba(220,38,38,0.12); border:1px solid #dc2626; border-radius:8px; padding:10px 14px; margin-bottom:12px; color:#fca5a5; font-size:13px;"></div>
+
+              <!-- ── NOT logged in ── -->
+              <div id="github-connect-section">
+                <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
+                  Connect your GitHub account to scan <strong>private repositories</strong>, or paste a public URL below.
+                </p>
+                <button type="button" id="github-connect-btn" style="
+                  display:inline-flex; align-items:center; gap:9px;
+                  background:#238636; color:#fff; border:none; border-radius:8px;
+                  padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer;
+                  transition: background 0.2s;
+                " onmouseover="this.style.background='#2ea043'" onmouseout="this.style.background='#238636'">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
                   </svg>
+                  Connect GitHub Account
+                </button>
+
+                <div style="margin-top:20px; position:relative;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                    <div style="flex:1; height:1px; background:var(--border);"></div>
+                    <span style="font-size:12px; color:var(--text-secondary);">or paste a public URL</span>
+                    <div style="flex:1; height:1px; background:var(--border);"></div>
+                  </div>
+                  <div class="input-group">
+                    <div class="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                      </svg>
+                    </div>
+                    <input type="url" id="codebase-url" name="codebase_url" class="text-input"
+                      placeholder="https://github.com/owner/repository" autocomplete="off" />
+                  </div>
                 </div>
-                <input type="url" id="codebase-url" name="codebase_url" class="text-input"
-                  placeholder="https://github.com/owner/repository" autocomplete="off" />
               </div>
+
+              <!-- ── Logged in ── -->
+              <div id="github-logged-section" style="display:none;">
+                <!-- User info bar -->
+                <div id="github-user-bar" style="
+                  display:flex; align-items:center; justify-content:space-between;
+                  background:var(--bg-glass); border:1px solid var(--border);
+                  border-radius:10px; padding:10px 14px; margin-bottom:16px;
+                ">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <img id="github-avatar" src="" alt="avatar" width="32" height="32"
+                      style="border-radius:50%; border:2px solid var(--primary);" />
+                    <div>
+                      <div style="font-size:13px; font-weight:600;" id="github-username-label">—</div>
+                      <div style="font-size:11px; color:var(--text-secondary);">Connected via GitHub OAuth</div>
+                    </div>
+                  </div>
+                  <button type="button" id="github-disconnect-btn" style="
+                    background:transparent; border:1px solid #dc2626; color:#f87171;
+                    border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer;
+                    transition:background 0.15s;
+                  " onmouseover="this.style.background='rgba(220,38,38,0.1)'" onmouseout="this.style.background='transparent'">
+                    Disconnect
+                  </button>
+                </div>
+
+                <!-- Repo search + picker -->
+                <div style="position:relative; margin-bottom:8px;">
+                  <input type="text" id="repo-search" placeholder="🔍  Search repositories..."
+                    style="width:100%; box-sizing:border-box; background:var(--bg-glass); border:1px solid var(--border);
+                      border-radius:8px; padding:10px 14px; color:var(--text-primary); font-size:14px; outline:none;
+                      transition:border-color 0.2s;" />
+                </div>
+
+                <div id="repo-list-container" style="
+                  background:var(--bg-glass); border:1px solid var(--border); border-radius:10px;
+                  max-height:260px; overflow-y:auto;
+                ">
+                  <div id="repo-list-loading" style="padding:20px; text-align:center; color:var(--text-secondary); font-size:13px;">
+                    Loading repositories...
+                  </div>
+                  <div id="repo-list" style="display:none;"></div>
+                </div>
+
+                <!-- Selected repo chip -->
+                <div id="repo-selected-chip" style="display:none; margin-top:10px; background:rgba(99,102,241,0.12);
+                  border:1px solid var(--primary); border-radius:8px; padding:8px 14px;
+                  display:none; align-items:center; gap:8px; font-size:13px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+                  </svg>
+                  <span id="repo-selected-name" style="font-weight:600;">—</span>
+                  <span id="repo-selected-badge" style="font-size:11px; background:rgba(99,102,241,0.2); padding:2px 6px; border-radius:4px;"></span>
+                </div>
+
+                <!-- Hidden URL input (populated from repo selection) -->
+                <input type="url" id="codebase-url" name="codebase_url" class="text-input" style="display:none;" autocomplete="off" />
+              </div>
+
               <div class="field-error" id="url-error"></div>
             </div>
 

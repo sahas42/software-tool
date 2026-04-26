@@ -3,6 +3,186 @@ console.info("Compliance platform initialized. Version 2.0.2 active.");
 
 const $ = (id) => document.getElementById(id);
 
+// ===================== GITHUB OAUTH =====================
+let githubRepos = [];  // full repo list fetched from /api/repos
+let githubLoggedIn = false;
+
+async function initGitHubAuth() {
+  // Handle OAuth redirect query params
+  const params = new URLSearchParams(window.location.search);
+  const authResult = params.get('auth');
+  const authError  = params.get('auth_error');
+
+  // Clean URL params without reload
+  if (authResult || authError) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  if (authError) {
+    const errEl = $('github-auth-error');
+    if (errEl) {
+      errEl.textContent = `GitHub authorization failed: ${authError.replace(/_/g, ' ')}`;
+      errEl.style.display = 'block';
+    }
+  }
+
+  // Check session status from backend
+  try {
+    const res = await fetch('/auth/status');
+    const data = await res.json();
+    if (data.logged_in) {
+      githubLoggedIn = true;
+      showGitHubLoggedIn(data.username, data.avatar);
+      await loadRepos();
+    } else {
+      showGitHubLoggedOut();
+    }
+  } catch (e) {
+    console.warn('Could not check GitHub auth status:', e);
+    showGitHubLoggedOut();
+  }
+}
+
+function showGitHubLoggedOut() {
+  githubLoggedIn = false;
+  const connectSection = $('github-connect-section');
+  const loggedSection  = $('github-logged-section');
+  if (connectSection) connectSection.style.display = 'block';
+  if (loggedSection)  loggedSection.style.display  = 'none';
+}
+
+function showGitHubLoggedIn(username, avatar) {
+  const connectSection = $('github-connect-section');
+  const loggedSection  = $('github-logged-section');
+  if (connectSection) connectSection.style.display = 'none';
+  if (loggedSection)  loggedSection.style.display  = 'block';
+
+  const usernameLabel = $('github-username-label');
+  const avatarImg     = $('github-avatar');
+  if (usernameLabel) usernameLabel.textContent = username || 'GitHub User';
+  if (avatarImg && avatar) avatarImg.src = avatar;
+}
+
+async function loadRepos() {
+  const listEl      = $('repo-list');
+  const loadingEl   = $('repo-list-loading');
+
+  if (!listEl || !loadingEl) return;
+  loadingEl.style.display = 'block';
+  listEl.style.display    = 'none';
+
+  try {
+    const res  = await fetch('/api/repos');
+    if (!res.ok) throw new Error('Failed to load repos');
+    const data = await res.json();
+    githubRepos = data.repos || [];
+    renderRepoList(githubRepos);
+  } catch (e) {
+    loadingEl.textContent = 'Failed to load repositories.';
+    console.error(e);
+  }
+}
+
+function renderRepoList(repos) {
+  const listEl    = $('repo-list');
+  const loadingEl = $('repo-list-loading');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+
+  if (repos.length === 0) {
+    listEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-secondary); font-size:13px;">No repositories found.</div>';
+  } else {
+    repos.forEach(repo => {
+      const item = document.createElement('div');
+      item.style.cssText = `
+        display:flex; align-items:center; justify-content:space-between;
+        padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer;
+        transition:background 0.15s; font-size:13px;
+      `;
+      item.addEventListener('mouseenter', () => item.style.background = 'rgba(99,102,241,0.08)');
+      item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+
+      const badge = repo.private
+        ? `<span style="font-size:10px; background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); color:#fbbf24; padding:2px 6px; border-radius:4px; white-space:nowrap;">🔒 Private</span>`
+        : `<span style="font-size:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:#4ade80; padding:2px 6px; border-radius:4px; white-space:nowrap;">Public</span>`;
+
+      item.innerHTML = `
+        <div style="overflow:hidden;">
+          <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(repo.full_name)}</div>
+          ${repo.description ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(repo.description)}</div>` : ''}
+        </div>
+        <div style="flex-shrink:0; margin-left:10px;">${badge}</div>
+      `;
+
+      item.addEventListener('click', () => selectRepo(repo));
+      listEl.appendChild(item);
+    });
+  }
+
+  loadingEl.style.display = 'none';
+  listEl.style.display    = 'block';
+}
+
+function selectRepo(repo) {
+  // Populate the hidden codebase URL input
+  const urlInput = $('codebase-url');
+  if (urlInput) urlInput.value = repo.html_url;
+
+  // Show selected chip
+  const chip    = $('repo-selected-chip');
+  const nameEl  = $('repo-selected-name');
+  const badgeEl = $('repo-selected-badge');
+
+  if (chip)   { chip.style.display = 'flex'; }
+  if (nameEl) nameEl.textContent   = repo.full_name;
+  if (badgeEl) {
+    badgeEl.textContent  = repo.private ? '🔒 Private' : 'Public';
+    badgeEl.style.color  = repo.private ? '#fbbf24' : '#4ade80';
+  }
+
+  clearError('url-error');
+}
+
+// Live repo search filter
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = $('repo-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      const filtered = q
+        ? githubRepos.filter(r => r.full_name.toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q))
+        : githubRepos;
+      renderRepoList(filtered);
+    });
+  }
+
+  // Connect button → redirect to OAuth flow
+  const connectBtn = $('github-connect-btn');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', () => {
+      window.location.href = '/auth/github';
+    });
+  }
+
+  // Disconnect button → POST /auth/logout then reset UI
+  const disconnectBtn = $('github-disconnect-btn');
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      githubRepos = [];
+      const urlInput = $('codebase-url');
+      if (urlInput) urlInput.value = '';
+      const chip = $('repo-selected-chip');
+      if (chip) chip.style.display = 'none';
+      showGitHubLoggedOut();
+    });
+  }
+
+  // Run auth check on load
+  initGitHubAuth();
+});
+
 // ===================== DOM refs =====================
 const form = $('audit-form');
 const submitBtn = $('submit-btn');

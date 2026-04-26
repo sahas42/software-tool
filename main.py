@@ -2,13 +2,17 @@ import os
 import io
 import zipfile
 import asyncio
+import secrets
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import urlencode
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, WebSocket, WebSocketDisconnect
+import httpx
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 import yaml
 
@@ -20,6 +24,17 @@ from celery_app import celery_app
 
 app = FastAPI(title="ACEP API", description="Agentic Compliance Enforcement Platform")
 
+# ── Session middleware (must be added BEFORE CORSMiddleware) ────────────────
+# SESSION_SECRET must be set in .env — any long random string works.
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("SESSION_SECRET", secrets.token_hex(32)),
+    session_cookie="acep_session",
+    max_age=60 * 60 * 24,  # 1 day
+    same_site="lax",
+    https_only=False,  # set True in production with HTTPS
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,6 +42,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── GitHub OAuth constants ──────────────────────────────────────────────────
+GITHUB_CLIENT_ID     = os.environ.get("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+GITHUB_REDIRECT_URI  = os.environ.get("GITHUB_REDIRECT_URI", "http://localhost:5001/auth/github/callback")
+GITHUB_SCOPES        = "repo read:user"  # `repo` grants access to private repos
 
 BASE_DIR = Path(__file__).resolve().parent
 WEBAPP_DIR = BASE_DIR / "webapp"
@@ -72,8 +93,147 @@ class AnalysisTaskResponse(BaseModel):
     task_id: str
     status: str
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# GitHub OAuth Routes
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/auth/github")
+async def github_login(request: Request):
+    """
+    Step 1 – Redirect the user to GitHub's OAuth authorization page.
+    A random `state` token is stored in the session to prevent CSRF.
+    """
+    if not GITHUB_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="GITHUB_CLIENT_ID is not configured.")
+
+    state = secrets.token_urlsafe(16)
+    request.session["oauth_state"] = state
+
+    params = urlencode({
+        "client_id": GITHUB_CLIENT_ID,
+        "redirect_uri": GITHUB_REDIRECT_URI,
+        "scope": GITHUB_SCOPES,
+        "state": state,
+    })
+    return RedirectResponse(url=f"https://github.com/login/oauth/authorize?{params}")
+
+
+@app.get("/auth/github/callback")
+async def github_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    """
+    Step 2 – GitHub redirects here after the user approves.
+    Exchange the `code` for an access token, store it in the session,
+    then redirect back to the frontend.
+    """
+    # OAuth error from GitHub (user denied, etc.)
+    if error:
+        return RedirectResponse(url=f"/?auth_error={error}")
+
+    # CSRF check
+    stored_state = request.session.pop("oauth_state", None)
+    if not stored_state or stored_state != state:
+        return RedirectResponse(url="/?auth_error=state_mismatch")
+
+    # Exchange code for token
+    async with httpx.AsyncClient() as client:
+        token_res = await client.post(
+            "https://github.com/login/oauth/access_token",
+            data={
+                "client_id":     GITHUB_CLIENT_ID,
+                "client_secret": GITHUB_CLIENT_SECRET,
+                "code":          code,
+                "redirect_uri":  GITHUB_REDIRECT_URI,
+            },
+            headers={"Accept": "application/json"},
+        )
+
+    token_data = token_res.json()
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        err_msg = token_data.get("error_description", "no_token")
+        return RedirectResponse(url=f"/?auth_error={err_msg}")
+
+    # Fetch basic user info
+    async with httpx.AsyncClient() as client:
+        user_res = await client.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/vnd.github+json"},
+        )
+    user_data = user_res.json()
+
+    # Persist in session
+    request.session["github_token"]    = access_token
+    request.session["github_username"] = user_data.get("login", "")
+    request.session["github_avatar"]   = user_data.get("avatar_url", "")
+
+    return RedirectResponse(url="/?auth=success")
+
+
+@app.get("/auth/status")
+async def auth_status(request: Request):
+    """Returns whether the user is logged in and their GitHub username."""
+    token = request.session.get("github_token")
+    if token:
+        return {
+            "logged_in": True,
+            "username":  request.session.get("github_username"),
+            "avatar":    request.session.get("github_avatar"),
+        }
+    return {"logged_in": False, "username": None, "avatar": None}
+
+
+@app.post("/auth/logout")
+async def logout(request: Request):
+    """Clear the GitHub OAuth session."""
+    request.session.clear()
+    return {"message": "Logged out successfully."}
+
+
+@app.get("/api/repos")
+async def list_repos(request: Request):
+    """
+    Returns the authenticated user's repositories (public + private),
+    sorted by most recently pushed.
+    Requires the user to be logged in via GitHub OAuth.
+    """
+    token = request.session.get("github_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated. Please connect your GitHub account.")
+
+    repos = []
+    page = 1
+    async with httpx.AsyncClient() as client:
+        while True:
+            res = await client.get(
+                "https://api.github.com/user/repos",
+                params={"per_page": 100, "page": page, "sort": "pushed", "affiliation": "owner,collaborator"},
+                headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+            )
+            batch = res.json()
+            if not batch or not isinstance(batch, list):
+                break
+            repos.extend([
+                {
+                    "full_name":    r["full_name"],
+                    "name":         r["name"],
+                    "private":      r["private"],
+                    "description":  r.get("description") or "",
+                    "html_url":     r["html_url"],
+                    "updated_at":   r.get("pushed_at") or r.get("updated_at"),
+                }
+                for r in batch
+            ])
+            if len(batch) < 100:
+                break
+            page += 1
+
+    return {"repos": repos, "total": len(repos)}
+
 @app.post("/api/analyze", response_model=AnalysisTaskResponse)
 async def analyze_endpoint(
+    request: Request,
     api_key: str = Form(os.environ.get("GEMINI_API_KEY", "")),
     codebase_type: str = Form("github"),
     extensions: str = Form(".py,.js,.ts,.java,.cpp,.c,.go,.rb,.rs"),
@@ -111,7 +271,13 @@ async def analyze_endpoint(
         if codebase_type == "github":
             if not codebase_url:
                 return JSONResponse(status_code=400, content={"error": "GitHub URL is required."})
-            codebase = await asyncio.to_thread(load_codebase, codebase_url)
+            # Use OAuth token if the user is logged in (enables private repo access)
+            github_token = request.session.get("github_token") if hasattr(request, "session") else None
+            if github_token:
+                from src.compliance_checker.github_loader import load_private_repo
+                codebase = await asyncio.to_thread(load_private_repo, codebase_url, github_token)
+            else:
+                codebase = await asyncio.to_thread(load_codebase, codebase_url)
         elif codebase_type == "zip":
             if not codebase_zip:
                 return JSONResponse(status_code=400, content={"error": "ZIP file is required."})
