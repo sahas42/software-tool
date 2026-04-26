@@ -68,6 +68,7 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 ### Sahasvat
 
 **Overall Contributions:**
+- **Total Project Output:** Personally authored and pushed **60+ commits** to the codebase, serving as the primary developer for the AI pipeline, and contributions and merges across the entire stack. Also the primary maintainer of documentation, project deliverables, and presentations, and a primary coordinator for the project.
 - **Core Architecture & Agentic RAG:** Authored initial modular MVP (Gemini, CLI, Pydantic). Developed the Advanced Agentic RAG Pipeline with a HyDE (Hypothetical Document Embeddings) sub-agent strategy to dramatically enhance semantic vector retrieval accuracy.
 - **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive text splitters with structurally meaningful code chunk boundaries.
 - **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing a complex, multi-branch architectural merge—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch. Reviewed and merged multiple other PRs.
@@ -85,6 +86,7 @@ During the second half of the course, **GitHub Issues** were actively utilized f
   
 
 **Weekly Task Breakdown (More in-depth contributions):**
+- **Before 24/02:** Proposed multiple ideas for the project and finalized the idea with the team and sir. Proposed meet with Dr Varsha to discuss feasibility of project, and concluded infeasibility of cryptographic approach. 
 - **03/03:** Engineered the initial CLI MVP (Gemini + Pydantic) with mock datasets. Analyzed research literature resolving project novelty. Formalized the core RAG strategy and ideated the VS Code extension concept.
 - **10/03:** Finalized a 9-hour certification in RAG architecture. Configured initial `gitingest` and PyPDF integration frameworks. Shipped the first set of functional features enabling remote GitHub repository scraping and analysis.
 - **17/03:** Standardized `pyproject.toml` dependencies. Drafted codebase local caching with robust metadata tracking. Championed transition towards code-specific chunking and embedding models over plain-text. Initiated bridging the RAG chain functionally into the web application scope.
