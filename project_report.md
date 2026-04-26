@@ -72,10 +72,16 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 - **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive text splitters with structurally meaningful code chunk boundaries.
 - **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing a complex, multi-branch architectural merge—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch.
 - **Pipeline Extensibility:** Shipped structural support for mapping remote GitHub repositories directly into the pipeline context. Exclusively authored the advanced PDF rule analyzer leveraging LLMs to isolate complex legal clauses visually outperforming standard text extractors.
-- **Research & Project Coordination:** Evaluated 12+ embedding models through robust literature reviews. Handled task allocations via GitHub issues, executed core cross-branch code reviews, curated the Prompt history DB, formulated structural system diagrams, and spearheaded the core project deliverables:
-  - **Release 2 Project Proposal & SRS v2:** Formalized the complete system blueprints and deployment boundaries.
+- **Research & Project Coordination:** Evaluated 12+ embedding models through robust literature reviews. Handled task allocations via GitHub issues, executed core cross-branch code reviews, curated the Prompt history DB, formulated structural system diagrams, and spearheaded/primary lead the core project deliverables:
+  - **Release 2 Project Proposal & SRS v2 (sole author):** Formalized the complete system blueprints and deployment boundaries.
   - **Phase 1 & Release 2 Project Reports:** Consolidated designs and weekly progressions into submission documents.
+  - **Phase 2 Timeline and Goals (sole creator)**
   - **Codebase Architecture Documentation:** Overhauled infrastructure docs to accurately depict 50+ architectural commits.
+  - **Proposal for Phase 1**
+  - **Infeasibility report for initial cryptographic approach**
+  - **Slide deck creation for demo**
+- **Further coordination:** Also organized multiple team meets to dicuss project progress, and conveyed meeting minutes to students who skipped meetings.
+  
 
 **Weekly Task Breakdown:**
 - **03/03:** Engineered the initial CLI MVP (Gemini + Pydantic) with mock datasets. Analyzed research literature resolving project novelty. Formalized the core RAG strategy and ideated the VS Code extension concept.
