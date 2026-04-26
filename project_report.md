@@ -60,6 +60,9 @@ flowchart TD
 - **AI / ML:** Google Gemini 2.5 Flash via API (for extraction, reasoning, and context-aware static code analysis); Tree-sitter for semantic abstract syntax tree (AST) codebase chunking; Jina/BGE equivalent variants for text embedding.
 - **DevOps / Collaboration:** Docker and Docker Compose for infrastructure orchestration and seamless local provisioning; Git/GitHub for version control.
 
+**Collaboration & Task Tracking Note:** 
+During the second half of the course, **GitHub Issues** were actively utilized for formal task tracking and task assignments. Routine team collaboration and communication were handled primarily via **WhatsApp group chats**. Historical logs of these WhatsApp chats have been previously shared in the course Discord group and can be re-supplied upon request.
+
 ## 6. CONTRIBUTIONS
 
 ### Sahasvat
