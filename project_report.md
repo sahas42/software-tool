@@ -117,6 +117,45 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 
 
 ### Vinay Sai
+### Sai Rohith
+
+**Overall Contributions:**
+
+- **First Implementation of Retrieval & Generation Phase:** Authored the first working
+  end-to-end implementation of the retrieval and generation phase of the Advanced RAG
+  pipeline (`src/audit.py`, commit: *"retival and generation"* — Mar 16). This 100-line
+  contribution established the core retrieval-to-inference flow that all subsequent
+  pipeline iterations were built upon.
+  
+- **Solution Evaluation & RAG Pipeline Diagnosis:** Critically evaluated the initially
+  proposed RAG pipeline and identified its core inefficiency — that embedding the entire
+  codebase on every audit run was computationally wasteful. This analysis directly
+  motivated two major architectural improvements adopted by the team.
+
+- **Identifying the HyDE Need:** Diagnosed why naive RAG retrieval was failing — the
+  semantic gap between natural language compliance rules and source code embeddings
+  produced poor retrieval accuracy. Surfaced and articulated this problem, which directly
+  led to the team adopting the Hypothetical Document Embeddings (HyDE) strategy.
+
+- **Task Cancellation System (Celery & Redis — Joint with Vinay Sai):** Co-implemented
+  the non-blocking async task execution layer. Specifically authored the task cancellation
+  infrastructure — adding the `/api/tasks/{task_id}/cancel` endpoint (`main.py`), task
+  abortion checks before progress starts (`worker.py`), and cancellation checks inside
+  the progress reporter (`worker.py`) — ensuring users can safely abort long-running
+  audit jobs in real time.
+
+- **CI/CD Delta-Indexing Pipeline (GitHub Actions):** Designed and implemented the
+  GitHub Actions CI/CD workflow with delta-indexing — using `git diff` and SHA-256 file
+  hashing so only changed files are re-embedded on each PR run, eliminating redundant
+  computation across repeated scans. Verified working end-to-end on a live PR (17s run,
+  1 artifact produced).
+
+- **GitHub OAuth Flow for Private Repository Access:** Designed and implemented a full
+  GitHub OAuth integration enabling users to authorize the platform to scan their
+  private repositories seamlessly — including backend OAuth routes, signed session
+  management, repo listing API, and an authenticated GitHub REST API private repo loader.
+
+
 # Weekly Work Summary
 
 ## Core Architecture
