@@ -65,26 +65,24 @@ flowchart TD
 ### Sahasvat
 
 **Overall Contributions:**
-- **Core Architecture & Agentic RAG:** Sole author of the initial modular MVP (using Gemini, CLI, and Pydantic schemas). Designed and implemented the Advanced Agentic RAG Pipeline with a HyDE (Hypothetical Document Embeddings) sub-agent strategy to dramatically enhance semantic vector retrieval accuracy.
-- **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive character splitters with structurally meaningful code chunk boundaries (functions, classes).
-- **Rule Extraction:** Developed an advanced PDF rule analyzer to extract multifaceted, complex legal compliance clauses precisely via LLMs.
-- **Input Ingestion & Pipeline Delivery:** Enabled remote repository compliance audits by integrating `gitingest`. Successfully exposed both the vanilla and RAG pipelines to the web application interface.
-- **Research & Project Coordination:** Executed rigorous literature reviews evaluating 12+ embedding models. Drove project momentum by structuring tasks via GitHub issues and conducting comprehensive cross-team code reviews. To establish the system design, I also spearheaded the following core project deliverables:
-  - **Release 2 System Requirements Specification (SRS v2):** Detailed system constraints, models, and pipeline transitions.
-  - **Release 2 Project Proposal:** Formally defined the new architecture and integration boundaries based on instructor feedback.
-  - **Phase 1 Submission Report:** Consolidated initial designs and workflows into a formal coursework report.
-  - **Codebase Architecture Documentation:** Overhauled project setup documentation to precisely reflect the last 50+ backend commits.
-  - **Project Presentation Slide Deck:** Authored core architectural slides and provided feedback to unify the presentation.
+- **Core Architecture & Agentic RAG:** Authored initial modular MVP (Gemini, CLI, Pydantic). Developed the Advanced Agentic RAG Pipeline with a HyDE (Hypothetical Document Embeddings) sub-agent strategy to dramatically enhance semantic vector retrieval accuracy.
+- **Semantic Code Chunking:** Integrated Tree-sitter to parse Python ASTs, replacing naive text splitters with structurally meaningful code chunk boundaries.
+- **Complex Codebase Integrations & Merges:** Resolved substantial structural deviations by executing complex, multi-branch architectural merges—namely integrating the Tree-Sitter semantic chunker cohesively into the distributed Qdrant vector store branch, and merging the massive async Redis/Celery worker architecture securely into `main`.
+- **Pipeline Extensibility:** Shipped structural support for mapping remote GitHub repositories directly into the pipeline context. Exclusively authored the advanced PDF rule analyzer leveraging LLMs to isolate complex legal clauses visually outperforming standard text extractors.
+- **Research & Project Coordination:** Evaluated 12+ embedding models through robust literature reviews. Handled task allocations via GitHub issues, executed core cross-branch code reviews, curated the Prompt history DB, formulated all major structural system diagrams, and spearheaded the core project deliverables:
+  - **Release 2 Project Proposal & SRS v2:** Formalized the complete system blueprints and deployment boundaries.
+  - **Phase 1 & Release 2 Project Reports:** Consolidated designs and weekly progressions into submission documents.
+  - **Codebase Architecture Documentation:** Overhauled infrastructure docs to accurately depict 50+ architectural commits.
 
 **Weekly Task Breakdown:**
-- **03/03:** Built the bare-minimal functional MVP CLI tool using Gemini and Pydantic. Reviewed literature to validate project novelty, and formally proposed the RAG architecture solution.
-- **10/03:** Up-skilled via a 9-hour RAG certification. Authored the initial architectural draft leveraging `gitingest` and PyPDF. Shipped code for analyzing remote GitHub repositories rather than just local directories.
-- **17/03:** Shipped codebase download logic for repositories. Outlined the RAG strategy transition, explicitly championing AST/code-specific chunking models over generic language chunkers. Standardized project dependencies.
-- **24/03:** Wired the Vanilla Gemini-Pydantic pipeline alongside the iterative RAG pipeline to the initial frontend web interface. Authored the Phase 1 Submission Report.
-- **31/03:** Split workloads strategically via GitHub issues. Conducted an extensive literature review (5+ papers, 12+ models) to isolate the most optimal code embedding models. Integrated the selected embedding models natively into the pipeline, complete with a UI toggle.
-- **07/04:** Delivered 8 critical commits launching two major infrastructural modules: **1.** The HyDE Sub-agent (including backend logic, tests, and UI toggles). **2.** Tree-sitter Semantic Chunking logic for rigorous code segmentation. Also prepared the final project presentation slide deck.
-- **14/04:** Reviewed and validated backend Redis/Celery changes. Exclusively authored a major structural Proposal rewrite for Release 2 based on instructor feedback. Exclusively drafted the System Requirements Specification (SRS) mapping out Release 2.
-- **21/04:** Commenced and finished the advanced PDF rule analyzer module. Merged the Celery/Redis asynchronous workers to `main`. Overhauled project documentation mapping 50+ commits, compiled prompt histories for grading transparency, and generated the formal Release 2 Project Report.
+- **03/03:** Engineered the initial CLI MVP (Gemini + Pydantic) with mock datasets. Analyzed research literature resolving project novelty. Formalized the core RAG strategy and ideated the VS Code extension concept.
+- **10/03:** Finalized a 9-hour certification in RAG architecture. Configured initial `gitingest` and PyPDF integration frameworks. Shipped the first set of functional features enabling remote GitHub repository scraping and analysis.
+- **17/03:** Standardized `pyproject.toml` dependencies. Drafted codebase local caching with robust metadata tracking. Championed transition towards code-specific chunking and embedding models over plain-text. Initiated bridging the RAG chain functionally into the web application scope.
+- **24/03:** Successfully wired both the standard Vanilla Pydantic and Advanced RAG pipelines to the web interface. Tracked `Lax_commits` branch for relevance-filtering integration and authored the main Phase 1 Submission Report.
+- **31/03:** Formulated work assignments and task-splitting via GitHub issues. Reviewed 5 papers on 12+ text-embedding models securely choosing optimal setups. Integrated chosen code-embedding models natively into pipeline routing backed by UI-level toggles.
+- **07/04:** Delivered 8 commits releasing: **1.** Entire HyDE generation strategy (backend, UI toggles, tests); **2.** Tree-sitter semantic AST chunking algorithms. Navigated the complex integration natively wiring semantic chunking with Prathamesh's Qdrant vector database. Authored Slide 4 for presentations.
+- **14/04:** Executed critical high-level code evaluations spanning pending Redis & Celery background-queue branches. Overhauled systemic constraints entirely from scratch authoring the defining Release 2 SRS and the updated Release 2 Project Proposal.
+- **21/04:** Built out and finalized the pipeline layer for the advanced PDF rule analyzer. Safeguarded the application by comprehensively reviewing and executing the high-conflict merge of asynchronous Redis/Celery components into `main`. Drafted the comprehensive Project Report and aggregated 50+ commit-worth of architectural documentation.
 
 ### Prathamesh
 
