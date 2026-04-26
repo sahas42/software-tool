@@ -59,3 +59,59 @@ flowchart TD
 - **Database (Vector Store):** Qdrant (deployed locally via Docker) for robust indexing and semantic search over code embeddings.
 - **AI / ML:** Google Gemini 2.5 Flash via API (for extraction, reasoning, and context-aware static code analysis); Tree-sitter for semantic abstract syntax tree (AST) codebase chunking; Jina/BGE equivalent variants for text embedding.
 - **DevOps / Collaboration:** Docker and Docker Compose for infrastructure orchestration and seamless local provisioning; Git/GitHub for version control.
+
+## 6. TEAM ROLES
+
+*Clearly define the role and responsibilities of each team member. Every member must have a distinct, meaningful contribution to the project. Generic or overlapping roles are not acceptable. Each member must also list the specific tasks they personally completed for Release 1 — not just their role title. Contributions must be verifiable through GitHub commits or task logs.*
+
+- **Member Name:** [Insert Name 1]
+  - **Role Title:** [Insert Role]
+  - **Specific Responsibilities:** [Detail specific responsibilities here]
+
+- **Member Name:** [Insert Name 2]
+  - **Role Title:** [Insert Role]
+  - **Specific Responsibilities:** [Detail specific responsibilities here]
+
+
+- **Member Name:** [Insert Name 3]
+  - **Role Title:** [Insert Role]
+  - **Specific Responsibilities:** [Detail specific responsibilities here]
+
+
+
+## 7. AI USAGE DECLARATION
+
+*Every team member must clearly declare what parts of the project code were written manually and what were generated or assisted by AI tools. This is not a penalty — it is a transparency requirement. Declaring your AI usage honestly is itself a learning outcome, it builds the habit of responsible, traceable AI-assisted engineering.*
+
+| Module / Component | Authoring Method (Manual/AI/Mix) | AI Tool Used (if applicable) | Prompt / Source Details |
+| :--- | :--- | :--- | :--- |
+| [e.g., Codebase Ingestion] | [e.g., Mix] | [e.g., Cursor] | [e.g., "Write a python script to recursively filter and read all .py files..."] |
+| [e.g., Next.js UI Frontend] | [e.g., AI-Generated] | [e.g., v0.dev] | [e.g., "Create a dark-mode dashboard to upload files with a progress bar..."] |
+| [e.g., AST Semantic Chunker] | [e.g., Manual] | N/A | [e.g., Team discussion and Tree-sitter documentation] |
+
+***Note for mixed content:*** *Describe what AI produced and what you changed or added on top of it. (e.g., "AI generated the base boilerplate, I added the error handling and custom Pydantic schemas.")*
+
+
+## 8. PROMPTS
+
+*This section is a mandatory and distinctive requirement of this lab. Your team must document all AI prompts used during the ideation, research, planning, and development phases of Release 1. Documenting prompts builds a traceable, reproducible record of how AI assisted your engineering process.*
+
+**Prompt 1**
+- **Tool:** [Name of the AI tool used, e.g., ChatGPT, Copilot]
+- **Prompt:** "[The exact prompt text submitted]"
+- **Purpose:** [What this prompt was intended to achieve]
+- **Outcome:** [Whether the output was useful, partially used, or discarded]
+
+**Prompt 2**
+- **Tool:** [Name of the AI tool used]
+- **Prompt:** "[The exact prompt text submitted]"
+- **Purpose:** [What this prompt was intended to achieve]
+- **Outcome:** [Whether the output was useful, partially used, or discarded]
+
+**Prompt 3**
+- **Tool:** [Name of the AI tool used]
+- **Prompt:** "[The exact prompt text submitted]"
+- **Purpose:** [What this prompt was intended to achieve]
+- **Outcome:** [Whether the output was useful, partially used, or discarded]
+
+*(Copy and paste the above block for additional prompts as needed)*
