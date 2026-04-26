@@ -108,6 +108,58 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 
 *My weekly breakdown is available in the Weekly Analysis Report.*
 
+
+### Vinay Sai
+# Weekly Work Summary
+
+## Core Architecture
+- Switched to FastAPI + Celery for async processing  
+- Added Redis (task queue) and Qdrant (vector DB)  
+- Replaced Chroma with Qdrant for incremental indexing (faster scans)  
+
+## Backend & Logic
+- Fixed critical bug in `worker.py` (positional argument issue)  
+- Moved violation schema (fixed zero violation bug)  
+- Improved WebSocket handling (show crashes instead of freezing)  
+- Added `verify_acep.py` for quick testing  
+- Integrated Tree-sitter for Python AST parsing  
+
+## AI & Performance
+- Optimized AI setup for Windows (eager attention + lazy loading)  
+- Reduced load time and improved responsiveness  
+- Added 2s delay between rule checks (avoid API rate limits)  
+
+## Frontend & UX
+- Initially migrated to Next.js + TypeScript  
+- Implemented WebSockets for live progress updates  
+- Later reverted to simple HTML/CSS/JS (better UI clarity)  
+- Added buttons: cancel, retry, new audit  
+- Instant cancel resets UI without waiting  
+- Improved real-time status feedback  
+- Added floating icons (file, search, lock, correct/incorrect)  
+- Supported inputs: link, zip, file upload  
+
+## System Design & Discussions
+- Finalized pipeline design with team  
+- Defined input methods and flow  
+- Discussed multi-agent toggle (beyond Gemini)  
+
+## Codebase & Maintenance
+- Removed ~7000 lines of unused frontend code  
+- Improved repo structure and readability  
+- Reviewed team commits  
+
+## Research & Learning
+- Learned RAG basics with LangChain  
+- Studied pipeline: ingestion → chunking → embeddings → vector DB → retrieval  
+- Explored filtering relevant/irrelevant files  
+- Researched auto-generating `rules.yaml` from datasets  
+
+## Documentation
+- Documented project purpose and tech stack
+
+detailed work done per week was clearly mentioned in the wsl sheet.
+
 ## 7. AI USAGE DECLARATION
 
 ### Sahasvat
@@ -124,7 +176,12 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 
 - I used AI somewhat to create a basic structure of code and then modified it with my taste like the embedding model which was used, the text chunking spilt size, the type of vector base used to store, etc…
 - I referred to GPT and Gemini to help in some places where I was stuck.
-- I take the full accountability for the code generated through me using LLMs. 
+- I take the full accountability for the code generated through me using LLMs.
+
+### Vinay Sai
+-I used ai to kind of make a quick prototype of what i was thinking and i tried to improve it step by step . architecture, design and flow was clearly mentioned to the ai and code generation was done by ai.(antigrvity)
+-Design ideas and unknown technologies , terminologies were carefully reasearched by me through chatgpt or gemini.
+- I take the full accountability for the code generated through me using LLMs.
 
 
 ## 8. PROMPTS
@@ -145,7 +202,7 @@ Please find links to my chats here: https://drive.google.com/drive/folders/1iPlR
   -https://gist.github.com/VinaySai-GH/74e2193c3e9096b2efe0baa44b977c59
   -https://gist.github.com/VinaySai-GH/f9b788c73730284a2b6f23bf509056e7
   
-  additionally, another chat in antigravity got deleted due to a bug
+  additionally, another chat in antigravity got deleted automatically due to a bug.
 
 
 
