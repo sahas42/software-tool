@@ -118,7 +118,7 @@ During the second half of the course, **GitHub Issues** were actively utilized f
 *My weekly breakdown is available in the Weekly Analysis Report.*
 
 
-### Vinay Sai
+
 ### Sai Rohith
 
 **Overall Contributions:**
@@ -201,8 +201,9 @@ During the second half of the course, **GitHub Issues** were actively utilized f
   - Reduced noise in vector database
   - More efficient compliance detection
 
+### Vinay Sai
 
-# Weekly Work Summary
+## Weekly Work Summary
 
 ## Core Architecture
 - Switched to FastAPI + Celery for async processing  
