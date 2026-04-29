@@ -3,6 +3,7 @@ name: ACEP Compliance Audit (Delta-Indexed)
 on:
   pull_request:
     branches: [ "main", "master" ]
+  workflow_dispatch:   # ← allows manual "Run workflow" button in GitHub Actions UI
 
 jobs:
   compliance-check:
