@@ -18,6 +18,10 @@ dependencies = [
     "pypdf>=4.0.0",
     "langchain>=0.3.0",
     "langchain-huggingface>=0.1.0",
+    # transformers 5.x removed internal APIs (find_pruneable_heads_and_indices) that
+    # the Jina Code v2 embedding model depends on. Pin to the 4.x series.
+    "transformers>=4.36.0,<5.0.0",
+    "huggingface-hub>=0.30.0,<1.0.0",
     "langchain-google-genai>=2.0.0",
     "langchain-text-splitters>=0.3.0",
     "qdrant-client>=1.9.0",
