@@ -100,83 +100,54 @@ python -m venv .venv
 # On macOS/Linux:
 # source .venv/bin/activate
 
-# 3. Install the dependencies
-# Option A (Recommended): Install the package itself in editable mode along with all dev/frontend dependencies via pyproject.toml
+# 3. Install dependencies
 pip install -e ".[dev]"
 
-# Option B: Alternatively, if you just want to install the required packages without installing the compliance checker as a module
-pip install -r requirements.txt
-
-# 4. Start Infrastructure Services (Docker Compose) - *OPTIONAL*
-# Required ONLY if you want to run the Modern Next.js interface with Celery background tasks.
-# The legacy Vanilla UI (server.py) bypasses Celery and uses an in-memory Vector store.
+# 4. Start Infrastructure (Redis & Qdrant)
 docker-compose up -d
 ```
 
 ## Usage
 
-You must provide a valid Gemini API Key. For backend and command-line operations (CLI), you can set it in a `.env` file at the root of the project:
+You must provide a valid Gemini API Key. Set it in a `.env` file at the project root:
 
 ```bash
-# Create a .env file
 echo GEMINI_API_KEY=your_actual_api_key_here > .env
 ```
+> **Note:** Even with `.env` set, the Web UI will ask you to paste your API Key before submitting an audit request.
 
-> **Note for Web Application Users:** Due to client-side validations, even if the backend environment variable is set, you **must paste your API Key** directly into the frontend UI field before submitting an audit request.
+**CRITICAL NOTE:** Always run the commands below from the *root directory of the project* (`software-tool/`).
 
-**CRITICAL NOTE:** Always run the commands below from the *root directory of the project* (`software-tool/`), **not** from inside the `src/` directory. If you run it from `src/`, relative paths like `examples/rules.yaml` will fail with a `FileNotFoundError`.
+### 1. Web Application (Primary Workflow)
+The primary interface runs on FastAPI and uses Celery for robust background processing.
 
-### Example 1: Local Codebase Check
-Run the package module, pointing it to both a rules file and a target codebase directory:
+1. Ensure infrastructure is running: `docker-compose up -d`
+2. Start the Celery Worker (in a separate terminal):
+```bash
+# On Windows, --pool=solo is required. On Mac/Linux, you can omit it.
+celery -A celery_app.celery_app worker --loglevel=info --pool=solo
+```
+3. Start the FastAPI Application (in another terminal):
+```bash
+python main.py
+```
+Open your browser and navigate to `http://localhost:5001` to access the interactive web app.
 
+### 2. Command-Line Interface (CLI)
+Run the module, pointing it to both a rules file and a target codebase directory:
 ```bash
 python -m compliance_checker --rules examples/rules.yaml --codebase examples/sample_project
 ```
-
-### Example 2: Remote GitHub Repository Check
-You can pass a GitHub URL to the `--codebase` flag to scrape public repositories dynamically:
-
+You can also dynamically scrape public GitHub repositories:
 ```bash
 python -m compliance_checker --rules examples/rules.yaml --codebase https://github.com/sahas42/ocr
 ```
 
-### Example 3: Web Application (Vanilla UI)
-A basic Flask-based web interface is available for easier interaction. **This mode does not require Docker, Celery, or Redis.** It executes tasks synchronously and natively spins up the Qdrant Vector database entirely in machine memory.
-
+### 3. Legacy Web Application (No Docker/Celery)
+A legacy Flask UI is available that executes tasks synchronously in memory without requiring Docker or background workers.
 ```bash
 python server.py
 ```
-Then, open your browser and navigate to `http://localhost:5001`. You can upload rule files (YAML/PDF) and analyze local files, ZIP archives, or GitHub repositories directly from the UI.
-
-### Example 4: Modern Web Application (Next.js UI)
-A modern, advanced Agentic Scanner interface built with Next.js is also available. It connects to the Flask backend API and relies on Celery for background processing.
-
-1. Start infrastructural services (if not already running):
-```bash
-docker-compose up -d
-```
-
-2. Start the Celery Worker (in a separate terminal):
-```bash
-# On Windows (use pool=solo):
-celery -A celery_app.celery_app worker --loglevel=info --pool=solo
-# On macOS/Linux:
-# celery -A celery_app.celery_app worker --loglevel=info
-```
-
-3. Start the Flask Backend API (in another terminal):
-```bash
-python server.py
-```
-
-4. Start the Next.js frontend (in another terminal):
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Finally, open your browser and navigate to `http://localhost:3000` to access the modern web app interface.
-
 
 ### Running Tests
 To run the automated test suite and prevent module resolution errors (like `ModuleNotFoundError`), always use the `pytest` module flag from the project root:
